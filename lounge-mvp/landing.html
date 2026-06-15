@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<title>LoungePass · 机场贵宾厅权益查询工具</title>
+
+<!-- 微信分享卡片 -->
+<meta name="description" content="免费查询31个国际机场贵宾厅覆盖情况：龙腾出行 vs Priority Pass 双渠道对比，含位置/营业时间/使用限制">
+<meta property="og:title" content="✈️ LoungePass 机场贵宾厅查询">
+<meta property="og:description" content="31个机场·118个贵宾厅·双渠道对比·免费查询">
+<meta property="og:type" content="website">
+
+<style>
+  /* ===== Reset & Base ===== */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --primary: #1a237e;
+    --primary-light: #3949ab;
+    --accent: #ff6d00;
+    --bg: #f0f2f5;
+    --card: #ffffff;
+    --text: #1a1a1a;
+    --text-secondary: #555;
+    --text-muted: #888;
+    --border: #e8eaed;
+    --radius: 14px;
+    --shadow: 0 2px 12px rgba(0,0,0,0.06);
+  }
+  html { -webkit-text-size-adjust: 100%; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: -apple-system, 'PingFang SC', 'Helvetica Neue', 'Microsoft YaHei', sans-serif;
+    background: var(--bg); color: var(--text);
+    font-size: 14px; line-height: 1.6;
+    padding-bottom: env(safe-area-inset-bottom);
+    overscroll-behavior-y: contain;
+  }
+
+  /* ===== Hero Section ===== */
+  .hero {
+    background: linear-gradient(135deg, #0d1642 0%, #1a237e 40%, #283593 70%, #3949ab 100%);
+    color: white; padding: 48px 20px 36px; text-align: center;
+    position: relative; overflow: hidden;
+  }
+  .hero::before {
+    content: ''; position: absolute; top: -60px; right: -30px;
+    width: 200px; height: 200px; border-radius: 50%;
+    background: rgba(255,255,255,0.04); pointer-events: none;
+  }
+  .hero::after {
+    content: ''; position: absolute; bottom: -50px; left: -20px;
+    width: 140px; height: 140px; border-radius: 50%;
+    background: rgba(255,255,255,0.03); pointer-events: none;
+  }
+
+  /* Logo / Brand */
+  .brand-icon {
+    font-size: 42px; margin-bottom: 10px; display: block; position: relative; z-index: 1;
+    filter: drop-shadow(0 2px 8px rgba(0,0,0,0.2));
+  }
+  .hero h1 {
+    font-size: 22px; font-weight: 800; letter-spacing: 0.5px;
+    position: relative; z-index: 1; line-height: 1.3;
+  }
+  .hero .subtitle {
+    font-size: 13px; opacity: 0.78; margin-top: 8px;
+    font-weight: 400; position: relative; z-index: 1;
+  }
+  .hero .tagline {
+    display: inline-block; margin-top: 14px; padding: 5px 14px;
+    background: rgba(255,255,255,0.12); border-radius: 20px;
+    font-size: 11.5px; font-weight: 600; letter-spacing: 0.3px;
+    border: 1px solid rgba(255,255,255,0.15);
+    position: relative; z-index: 1;
+  }
+
+  /* ===== Main Content ===== */
+  .container { max-width: 480px; margin: 0 auto; padding: 16px 16px 32px; }
+
+  /* Stats Row */
+  .stats-row {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+    margin-bottom: 18px;
+  }
+  .stat-card {
+    background: var(--card); border-radius: var(--radius); padding: 14px 8px;
+    text-align: center; box-shadow: var(--shadow);
+  }
+  .stat-num {
+    font-size: 26px; font-weight: 800; color: var(--primary);
+    line-height: 1.1; letter-spacing: -0.5px;
+  }
+  .stat-label { font-size: 11px; color: var(--text-muted); margin-top: 4px; font-weight: 500; }
+
+  /* Features */
+  .feature-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 22px; }
+  .feature-item {
+    background: var(--card); border-radius: var(--radius); padding: 14px 16px;
+    box-shadow: var(--shadow); display: flex; align-items: flex-start; gap: 12px;
+    transition: transform 0.15s;
+  }
+  .feature-item:active { transform: scale(0.98); }
+  .feature-icon {
+    font-size: 24px; flex-shrink: 0; width: 38px; height: 38px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 10px; background: #e8eaf6;
+  }
+  .feature-text h3 { font-size: 14px; font-weight: 700; color: var(--text); }
+  .feature-text p { font-size: 12px; color: var(--text-muted); margin-top: 2px; line-height: 1.4; }
+
+  /* CTA Button */
+  .cta-section { margin-bottom: 24px; }
+  .cta-btn {
+    display: block; width: 100%; padding: 15px 20px;
+    background: linear-gradient(135deg, var(--accent) 0%, #ff8f00 100%);
+    color: white; text-decoration: none; text-align: center;
+    border-radius: var(--radius); font-size: 16px; font-weight: 700;
+    letter-spacing: 0.3px; box-shadow: 0 4px 16px rgba(255,109,0,0.3);
+    transition: all 0.2s; border: none; cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .cta-btn:active { transform: scale(0.97); box-shadow: 0 2px 8px rgba(255,109,0,0.25); }
+  .cta-sub { text-align: center; font-size: 11px; color: var(--text-muted); margin-top: 8px; }
+
+  /* WeChat Section */
+  .wechat-section {
+    background: var(--card); border-radius: var(--radius); padding: 22px 18px;
+    box-shadow: var(--shadow); text-align: center; margin-bottom: 20px;
+  }
+  .wechat-section h3 { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+  .wechat-section .desc { font-size: 12px; color: var(--text-muted); margin-bottom: 16px; }
+  .qr-wrapper {
+    display: inline-block; padding: 12px; background: white; border-radius: 12px;
+    border: 1px solid var(--border);
+  }
+  .qr-placeholder {
+    width: 160px; height: 160px;
+    background: linear-gradient(135deg, #f5f5f5 25%, #eee 25%, #eee 50%, #f5f5f5 50%, #f5f5f5 75%, #eee 75%);
+    background-size: 12px 12px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 8px; font-size: 13px; color: var(--text-muted); font-weight: 600;
+  }
+  .wechat-tip { font-size: 11px; color: var(--text-muted); margin-top: 12px; line-height: 1.5; }
+
+  /* Airport Preview Tags */
+  .airport-preview {
+    background: var(--card); border-radius: var(--radius); padding: 16px;
+    box-shadow: var(--shadow); margin-bottom: 20px;
+  }
+  .airport-preview h3 { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 12px; }
+  .airport-tags {
+    display: flex; flex-wrap: wrap; gap: 7px;
+  }
+  .apt-tag {
+    padding: 5px 11px; border-radius: 16px; font-size: 11.5px; font-weight: 600;
+    background: #e8eaf6; color: var(--primary); user-select: none;
+  }
+
+  /* Footer */
+  .footer {
+    text-align: center; padding: 20px 0 28px;
+    font-size: 11px; color: var(--text-muted); line-height: 1.6;
+  }
+  .footer .brand { color: var(--primary); font-weight: 700; }
+
+  /* Divider */
+  .divider {
+    height: 1px; background: linear-gradient(90deg, transparent, var(--border), transparent);
+    margin: 0 auto 18px; width: 80%;
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== Hero ===== -->
+<div class="hero">
+  <span class="brand-icon">✈️</span>
+  <h1>机场贵宾厅<br>权益查询工具</h1>
+  <p class="subtitle">LoungePass · 出行必备助手</p>
+  <div class="tagline">🔍 龙腾出行 × Priority Pass 双渠道对比</div>
+</div>
+
+<div class="container">
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-num">31<span style="font-size:14px">个</span></div>
+      <div class="stat-label">国际机场</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">118<span style="font-size:14px">条</span></div>
+      <div class="stat-label">贵宾厅数据</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" style="color:#e65100">龙</div>
+      <div class="stat-num" style="font-size:18px;color:#2e7d32;display:inline">+PP</div>
+      <div class="stat-label">双渠道对比</div>
+    </div>
+  </div>
+
+  <!-- Features -->
+  <div class="feature-list">
+    <div class="feature-item">
+      <div class="feature-icon">🌍</div>
+      <div class="feature-text">
+        <h3>覆盖全球热门机场</h3>
+        <p>希思罗、香港、吉隆坡、开罗、罗马、新德里等31个国际枢纽，持续更新中</p>
+      </div>
+    </div>
+    <div class="feature-item">
+      <div class="feature-icon">⚡</div>
+      <div class="feature-text">
+        <h3>一秒知道能不能用</h3>
+        <p>输入机场代码，立刻看到所有贵宾厅列表、渠道覆盖、位置指引</p>
+      </div>
+    </div>
+    <div class="feature-item">
+      <div class="feature-icon">📝</div>
+      <div class="feature-text">
+        <h3>实测数据 · 持续更新</h3>
+        <p>营业时间、提前使用规则、特殊限制等关键信息，基于行业经验+用户反馈</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div class="cta-section">
+    <a href="index.html" class="cta-btn">立即免费使用 →</a>
+    <p class="cta-sub">无需注册 · 打开即用</p>
+  </div>
+
+  <!-- Divider -->
+  <div class="divider"></div>
+
+  <!-- WeChat -->
+  <div class="wechat-section">
+    <h3>💬 加微信获取更多服务</h3>
+    <p class="desc">贵宾厅权益提醒 / 出行交流群 / 最新数据推送</p>
+    <div class="qr-wrapper">
+      <img src="qr-wechat.jpg" alt="微信二维码" style="width:180px;max-width:100%;border-radius:8px;display:block">
+    </div>
+    <p class="wechat-tip">
+      扫码或长按识别添加微信<br>
+      备注「贵宾厅」进出行交流群
+    </p>
+  </div>
+
+  <!-- Airport Preview -->
+  <div class="airport-preview">
+    <h3>📍 已覆盖机场（部分）</h3>
+    <div class="airport-tags">
+      <span class="apt-tag">🇬🇧 LHR 希思罗</span>
+      <span class="apt-tag">🇭🇰 HKG 香港</span>
+      <span class="apt-tag">🇲🇾 KUL 吉隆坡</span>
+      <span class="apt-tag">🇪🇸 MAD 马德里</span>
+      <span class="apt-tag">🇮🇹 FCO 罗马</span>
+      <span class="apt-tag">🇮🇳 DEL 新德里</span>
+      <span class="apt-tag">🇪🇬 CAI 开罗</span>
+      <span class="apt-tag">🇻🇳 HAN 河内</span>
+      <span class="apt-tag">🇪🇸 BCN 巴塞罗那</span>
+      <span class="apt-tag">🇨🇦 YVR 温哥华</span>
+      <span class="apt-tag">🇯🇵 KIX 大阪</span>
+      <span class="apt-tag">🇦🇺 MEL 墨尔本</span>
+      <span class="apt-tag">🇩🇪 BER 柏林</span>
+      <span class="apt-tag">🇳🇱 AMS 阿姆斯特丹</span>
+      <span class="apt-tag">🇭🇺 BUD 布达佩斯</span>
+      <span class="apt-tag">🇸🇦 JED 吉达</span>
+      <span class="apt-tag">🇫🇷 ...更多</span>
+    </div>
+  </div>
+
+</div>
+
+<!-- Footer -->
+<div class="footer">
+  <p><span class="brand">LoungePass</span> · 机场贵宾厅智能查询</p>
+  <p>数据仅供参考，以现场实际为准</p>
+</div>
+
+<script>
+  // 长按保存二维码提示（微信内）
+  document.addEventListener('DOMContentLoaded', function() {
+    var qrImg = document.querySelector('.qr-wrapper img');
+    if (qrImg) {
+      qrImg.addEventListener('longpress', function(e) {
+        e.preventDefault();
+      });
+    }
+  });
+</script>
+
+</body>
+</html>
