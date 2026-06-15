@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>贵宾厅数据 - 快速录入</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, 'PingFang SC', sans-serif; background: #f0f2f5; padding: 16px; max-width: 600px; margin: 0 auto; }
+  h1 { font-size: 18px; margin-bottom: 12px; color: #1a237e; }
+
+  /* Airport selector */
+  .airport-select { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+  .apt-btn { padding: 4px 10px; border-radius: 14px; border: 1.5px solid #ddd; background: white; cursor: pointer; font-size: 11.5px; font-weight: 500; transition: 0.2s; display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; }
+  .apt-btn.active { border-color: #3949ab; background: #e8eaf6; color: #1a237e; }
+  .apt-btn .apt-data-count { background: rgba(0,0,0,0.08); font-size: 9px; padding: 0 5px; border-radius: 8px; font-weight: 700; min-width: 16px; text-align: center; }
+  .apt-btn.active .apt-data-count { background: rgba(25,27,78,0.15); color: #1a237e; }
+  .add-apt-btn { border-style: dashed !important; border-color: #bbb !important; color: #888 !important; font-size: 14px !important; min-width: 28px; padding: 4px 8px !important; }
+  .add-apt-btn:hover { border-color: #3949ab !important; color: #3949ab !important; background: #f5f5ff !important; }
+
+  /* Airport selector container */
+  .airport-select {
+    display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+    margin-bottom: 12px; padding: 10px 12px; background: #fafafa; border-radius: 10px;
+    border: 1px solid #eee;
+  }
+  .apt-search-wrap { width: 100%; margin-bottom: 4px; position: relative; }
+  .apt-search-wrap input {
+    width: 100%; padding: 6px 10px 6px 28px; border: 1.5px solid #ddd; border-radius: 8px;
+    font-size: 12px; outline: none; transition: border-color 0.2s; font-family: inherit; background: white;
+  }
+  .apt-search-wrap input:focus { border-color: #3949ab; }
+  .apt-search-icon { position: absolute; left: 9px; top: 50%; transform: translateY(-50%); color: #bbb; font-size: 12px; pointer-events: none; }
+
+  /* Lounge Entry Form */
+  .entry-form { background: white; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+  .form-row { display: flex; gap: 10px; margin-bottom: 10px; }
+  .form-row > * { flex: 1; }
+  label { display: block; font-size: 11px; color: #888; font-weight: 500; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.3px; }
+  input, select, textarea {
+    width: 100%; padding: 10px 12px; border: 1.5px solid #e0e0e0; border-radius: 8px;
+    font-size: 14px; outline: none; transition: border-color 0.2s; font-family: inherit;
+  }
+  input:focus, select:focus, textarea:focus { border-color: #3949ab; }
+  
+  /* Checkboxes */
+  .check-group { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+  .check-item { 
+    display: inline-flex; align-items: center; gap: 4px; padding: 7px 14px; border-radius: 20px;
+    border: 1.5px solid #e0e0e0; cursor: pointer; font-size: 12px; transition: all 0.15s; user-select: none;
+    -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+  }
+  .check-item:hover { border-color: #bbb; background: #fafafa; }
+  .check-item.checked { 
+    border-color: #3949ab !important; background: #e8eaf6 !important; color: #1a237e !important;
+    box-shadow: 0 1px 4px rgba(57,73,171,0.2);
+  }
+  .check-item.rest.checked { border-color: #c62828 !important; background: #fce4ec !important; color: #c62828 !important; box-shadow: 0 1px 4px rgba(198,40,40,0.2); }
+  .check-item.fee.checked { border-color: #e65100 !important; background: #fff3e0 !important; color: #e65100 !important; box-shadow: 0 1px 4px rgba(230,80,0,0.2); }
+
+  /* Verification Level */
+  .ver-section { margin-top: 10px; }
+  .ver-toggle { display: flex; gap: 6px; }
+  .ver-btn {
+    flex: 1; padding: 8px 6px; border-radius: 8px; text-align: center; font-size: 11px;
+    font-weight: 600; border: 2px solid #eee; cursor: pointer; transition: 0.2s;
+    display: flex; align-items: center; justify-content: center; gap: 4px;
+  }
+  .ver-btn.active-len { border-color: #43a047; background: #e8f5e9; color: #2e7d32; }
+  .ver-btn.active-unk { border-color: #fbc02d; background: #fffde7; color: #f9a825; }
+  .ver-btn.active-str { border-color: #e53935; background: #ffebee; color: #c62828; }
+
+  /* Channel toggle */
+  .channel-toggle { display: flex; gap: 8px; margin-bottom: 10px; }
+  .ch-toggle {
+    flex: 1; padding: 10px; border-radius: 8px; text-align: center; font-size: 13px;
+    font-weight: 600; border: 2px solid #eee; cursor: pointer; transition: 0.2s;
+  }
+  .ch-toggle.active-dp { border-color: #e65100; background: #fff3e0; color: #e65100; }
+  .ch-toggle.active-pp { border-color: #2e7d32; background: #e8f5e9; color: #2e7d32; }
+  .ch-toggle.active-both { border-color: #1565c0; background: #e3f2fd; color: #1565c0; }
+
+  /* Buttons */
+  .btn-primary {
+    width: 100%; padding: 12px; border: none; border-radius: 10px; background: #3949ab;
+    color: white; font-size: 15px; font-weight: 600; cursor: pointer; transition: 0.2s;
+  }
+  .btn-primary:hover { background: #303f9f; }
+  .btn-secondary {
+    width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 10px; background: white;
+    color: #666; font-size: 14px; font-weight: 500; cursor: pointer; margin-top: 8px;
+  }
+
+  /* Data List */
+  .data-list { margin-top: 16px; }
+  .data-item {
+    background: white; border-radius: 10px; padding: 12px 14px; margin-bottom: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center;
+    border-left: 4px solid #ccc;
+  }
+  .data-item.border-dp { border-left-color: #e65100; }
+  .data-item.border-pp { border-left-color: #2e7d32; }
+  .data-item.border-both { border-left-color: #1565c0; }
+  .data-item .di-name { font-size: 14px; font-weight: 600; }
+  .data-item .di-meta { font-size: 11px; color: #999; margin-top: 2px; }
+  .data-item .di-important { font-size: 11.5px; color: #e65100; background: #fff8e1; padding: 4px 8px; border-radius: 6px; margin-top: 4px; border-left: 3px solid #e65100; line-height: 1.4; }
+  .di-badges { display: flex; gap: 4px; }
+  .di-badge { font-size: 10px; padding: 2px 8px; border-radius: 8px; font-weight: 600; }
+  .di-badge.dp { background: #fff3e0; color: #e65100; }
+  .di-badge.pp { background: #e8f5e9; color: #2e7d32; }
+  .di-badge.rest { background: #fce4ec; color: #c62828; }
+
+  /* Output */
+  .output-area {
+    background: #263238; border-radius: 10px; padding: 14px; margin-top: 14px;
+    font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: 12px; color: #80cbc4;
+    overflow-x: auto; white-space: pre-wrap; word-break: break-all; max-height: 300px; overflow-y: auto;
+    display: none;
+  }
+  .output-area.show { display: block; }
+
+  .stats-mini { display: flex; gap: 12px; margin-bottom: 12px; font-size: 12px; color: #666; }
+  .stats-mini strong { color: #1a237e; font-size: 16px; }
+
+  .delete-btn { background: none; border: none; color: #f44336; cursor: pointer; font-size: 16px; padding: 0 2px; line-height: 1; }
+  .edit-btn { background: none; border: none; color: #3949ab; cursor: pointer; font-size: 15px; padding: 0 4px; line-height: 1; }
+  .edit-btn:hover { color: #1a237e; }
+
+  /* Time Before Flight Buttons */
+  .time-btn {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 7px 12px; border-radius: 20px; border: 2px solid #e0e0e0;
+    background: white; cursor: pointer; font-size: 12px; color: #555;
+    transition: all 0.2s; user-select: none;
+  }
+  .time-btn:hover { border-color: #f57c00; }
+  .time-btn.active { background: #fff3e0; border-color: #f57c00; color: #e65100; font-weight: 600; }
+  .time-btn b { font-size: 14px; }
+
+  /* Search */
+  .search-box { margin-bottom: 12px; position: relative; }
+  .search-box input {
+    width: 100%; padding: 10px 14px 10px 38px; border: 2px solid #e0e0e0; border-radius: 10px;
+    font-size: 14px; outline: none; transition: border-color 0.2s; font-family: inherit; background: white;
+  }
+  .search-box input:focus { border-color: #3949ab; }
+  .search-icon { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: #aaa; font-size: 15px; pointer-events: none; }
+
+  /* Terminal Group */
+  .term-group { margin-bottom: 10px; }
+  .term-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 12px; background: linear-gradient(135deg, #3949ab, #5c6bc0); color: white;
+    border-radius: 8px 8px 0 0; cursor: pointer; user-select: none;
+    font-size: 13px; font-weight: 600; transition: opacity 0.2s;
+  }
+  .term-header:hover { opacity: 0.92; }
+  .term-header .th-left { display: flex; align-items: center; gap: 8px; }
+  .term-count { background: rgba(255,255,255,0.25); padding: 1px 8px; border-radius: 10px; font-size: 11px; font-weight: 400; }
+  .term-arrow { transition: transform 0.25s; font-size: 12px; }
+  .term-group.collapsed .term-arrow { transform: rotate(-90deg); }
+  .term-body { max-height: 2000px; overflow: hidden; transition: max-height 0.35s ease; }
+  .term-group.collapsed .term-body { max-height: 0; }
+
+  /* Compact data item */
+  .data-item {
+    background: white; border-radius: 0 0 8px 8px; padding: 9px 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center;
+    border-left: 4px solid #ccc; border-top: 1px solid #f0f0f0;
+  }
+  .data-item:last-child { border-radius: 0 0 8px 8px; }
+  .data-item .di-name { font-size: 13px; font-weight: 600; line-height: 1.3; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .data-item .di-meta { font-size: 10px; color: #aaa; margin-top: 1px; }
+  .di-badges { display: flex; gap: 3px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; max-width: 160px; }
+  .di-badge { font-size: 9px; padding: 1px 6px; border-radius: 8px; font-weight: 600; }
+</style>
+</head>
+<body>
+
+<h1>📝 贵宾厅数据快速录入</h1>
+
+<!-- Airport Select -->
+<div class="airport-select" id="airportSelectBox">
+  <div class="apt-search-wrap">
+    <span class="apt-search-icon">🔍</span>
+    <input type="text" id="aptSearchInput" placeholder="搜索机场..." oninput="filterAirports()" value="">
+  </div>
+  <button class="apt-btn active" data-code="LHR" onclick="selectAirport(this,'LHR')">LHR 希思罗<span class="apt-data-count" id="cnt_LHR">0</span></button>
+  <button class="apt-btn" data-code="HKG" onclick="selectAirport(this,'HKG')">HKG 香港<span class="apt-data-count" id="cnt_HKG">0</span></button>
+  <button class="apt-btn" data-code="CPH" onclick="selectAirport(this,'CPH')">CPH 哥本哈根<span class="apt-data-count" id="cnt_CPH">0</span></button>
+  <button class="apt-btn add-apt-btn" onclick="showAddAirport()" title="添加新机场">＋</button>
+</div>
+
+<!-- Add Airport Popup (hidden by default) -->
+<div id="addAirportPopup" style="display:none;background:white;border-radius:12px;padding:14px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,0.1);border:2px solid #3949ab;">
+  <div style="font-size:13px;font-weight:600;color:#1a237e;margin-bottom:10px">✨ 添加新机场</div>
+  <div style="display:flex;gap:8px;margin-bottom:8px">
+    <input type="text" id="newAptCode" placeholder="代码 (如 PVG/PEK/SIN)" maxlength="4"
+      style="flex:0 0 90px;text-transform:uppercase;font-weight:700;font-size:15px;text-align:center;letter-spacing:1px;padding:10px">
+    <input type="text" id="newAptName" placeholder="中文名 (如 浦东/首都)" style="flex:1">
+  </div>
+  <div style="display:flex;gap:8px">
+    <button onclick="confirmAddAirport()" class="btn-primary" style="padding:9px;font-size:13px;flex:1">确认添加</button>
+    <button onclick="hideAddAirport()" class="btn-secondary" style="padding:9px;font-size:13px;flex:0 0 70px">取消</button>
+  </div>
+</div>
+
+<div class="stats-mini">
+  已录入: <strong id="totalCount">0</strong> 个 | 
+  龙腾: <strong id="dpCount">0</strong> | 
+  PP: <strong id="ppCount">0</strong> |
+  重叠: <strong id="bothCount">0</strong>
+</div>
+
+<!-- Entry Form -->
+<div class="entry-form">
+  <label>休息室名称（英文）</label>
+  <input type="text" id="fldName" placeholder="如: Plaza Premium Lounge">
+
+  <div style="margin-top:10px"></div>
+  <label>航站楼</label>
+  <div class="form-row">
+    <select id="fldTerminal"><option value="T1">T1</option><option value="T2">T2</option><option value="T3" selected>T3</option><option value="T4">T4</option><option value="T5">T5</option><option value="">未知</option></select>
+    <input type="text" id="fldLocation" placeholder="位置描述（可选）">
+  </div>
+
+  <div style="margin-top:10px"></div>
+  <label>可用渠道（点击切换）</label>
+  <div class="channel-toggle">
+    <div class="ch-toggle active-both" id="chBoth" onclick="setChannel('both')">两者都有</div>
+    <div class="ch-toggle" id="chDp" onclick="setChannel('dp')">仅龙腾</div>
+    <div class="ch-toggle" id="chPp" onclick="setChannel('pp')">仅PP</div>
+  </div>
+
+  <div class="ver-section">
+    <label>🔒 实名验证级别（你的内部标记，展示端只有你看懂）</label>
+    <div class="ver-toggle">
+      <div class="ver-btn active-len" id="verLenient" onclick="setVerify('lenient')">
+        🔓 宽松<br><span style="font-weight:400;font-size:9px;color:#888">非实名可用·成本¥0</span>
+      </div>
+      <div class="ver-btn active-unk" id="verUnknown" onclick="setVerify('unknown')">
+        ❓ 不确定<br><span style="font-weight:400;font-size:9px;color:#888">先非实名→不行再实名</span>
+      </div>
+      <div class="ver-btn" id="verStrict" onclick="setVerify('strict')">
+        🔒 严格<br><span style="font-weight:400;font-size:9px;color:#888">需实名出单·有成本</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:10px"></div>
+  <label>设施特点（点击选择）</label>
+  <div class="check-group">
+    <span class="check-item" onclick="toggleCheck(this)" data-val="food"><b>☐</b> 餐食</span>
+    <span class="check-item" onclick="toggleCheck(this)" data-val="shower"><b>☐</b> 淋浴</span>
+    <span class="check-item rest" onclick="toggleCheck(this)" data-val="restaurant"><b>☐</b> 餐厅(可用餐)</span>
+    <span class="check-item fee" onclick="toggleCheck(this)" data-val="fee"><b>☐</b> 额外收费</span>
+    <span class="check-item" onclick="toggleCheck(this)" data-val="spa"><b>☐</b> SPA</span>
+    <span class="check-item" onclick="toggleCheck(this)" data-val="business"><b>☐</b> 商务中心</span>
+  </div>
+
+  <div style="margin-top:12px"></div>
+  <label>⏰ 营业时间</label>
+  <input type="text" id="fldHours" placeholder="如: 05:00-23:00 / 24小时 / 06:00-最后航班">
+
+  <div style="margin-top:10px"></div>
+  <label>✈️ 提前使用规则（起飞前多久可以进，点击选择）</label>
+  <div id="timeBeforeGroup" class="check-group" style="flex-wrap:wrap">
+    <span class="time-btn" onclick="setTimeBefore(this,'2h')" data-t="2h"><b>⏱</b> 起飞前2小时</span>
+    <span class="time-btn" onclick="setTimeBefore(this,'3h')" data-t="3h"><b>⏱</b> 起飞前3小时</span>
+    <span class="time-btn" onclick="setTimeBefore(this,'4h')" data-t="4h"><b>⏱</b> 起飞前4小时</span>
+    <span class="time-btn" onclick="setTimeBefore(this,'any')" data-t="any"><b>⏱</b> 随时可进</span>
+    <span class="time-btn" onclick="setTimeBefore(this,'unknown')" data-t="unknown"><b>⏱</b> 不确定</span>
+  </div>
+
+  <label>⚠️ 重要信息 / 使用限制（特殊规则备注）</label>
+  <textarea id="fldImportant" rows="2" placeholder="如：仅限1-20号登机口航班使用 / 需出示机票 / 仅限特定航司..."></textarea>
+
+  <button class="btn-primary" id="btnAddEdit" onclick="addOrEditLounge()" style="margin-top:14px;">+ 添加到列表</button>
+  <div style="display:flex;gap:8px;margin-top:10px">
+    <button class="btn-primary" style="flex:2;padding:10px;font-size:14px" onclick="saveData()">💾 保存数据</button>
+    <button class="btn-secondary" style="flex:1;padding:10px" onclick="exportData()">📋 复制</button>
+  </div>
+  <button class="btn-secondary" onclick="clearAll()">🗑️ 清空全部</button>
+  <button class="btn-secondary" onclick="resetToPreset()" style="color:#e65100;border-color:#e65100">🔄 恢复预置数据（修复丢失）</button>
+  <button class="btn-secondary" onclick="backupAllData()" style="color:#0277bd;border-color:#0277bd">📦 备份所有机场数据</button>
+  <button class="btn-secondary" onclick="copyBackupToClipboard()" style="color:#6a1b9a;border-color:#6a1b9a">📋 复制数据到剪贴板</button>
+  <label class="btn-secondary" style="color:#2e7d32;border-color:#2e7d32;cursor:pointer;display:inline-flex;align-items:center;gap:4px">
+    📂 恢复备份<input type="file" id="restoreFile" accept=".json" style="display:none" onchange="restoreBackup(event)">
+  </label>
+  <div id="saveStatus" style="text-align:center;color:#43a047;font-size:12px;margin-top:6px;opacity:0;transition:0.3s">✅ 已自动保存</div>
+</div>
+
+<!-- Search -->
+<div class="search-box">
+  <span class="search-icon">🔍</span>
+  <input type="text" id="searchInput" placeholder="搜索休息室名称..." oninput="renderList()">
+</div>
+
+<!-- Data List (grouped by terminal) -->
+<div class="data-list" id="dataList"></div>
+
+<!-- JSON Output -->
+<div class="output-area" id="jsonOutput"></div>
+
+<script>
+let currentChannel = 'both';
+let currentAirport = 'LHR';
+let verifyLevel = 'lenient';
+let timeBefore = '';  // 2h/3h/4h/any/unknown
+let editingIdx = -1;  // -1 = 新增模式, >=0 = 编辑第N条
+
+// ===== 预置数据（已保存，不会因修改代码而丢失） =====
+const PRESET_DATA = {
+  LHR: [
+    { name: 'Plaza Premium Lounge', terminal: 'T2', location: '遵循航站楼内A3 Lounge标识至4楼贵宾室', channels: ['both'], tags: ['餐食','淋浴'], isRestaurant: false, exclusive: false, verifyLevel: 'lenient' },
+    { name: 'No. 1 Lounge', terminal: 'T2', location: 'Terminal 2出发大厅', channels: ['pp'], tags: ['餐食'], isRestaurant: false, exclusive: true, verifyLevel: 'unknown' },
+    { name: 'No. 1 Lounge / No. 1 Heathrow', terminal: 'T3', location: '通过护照检查后，乘电梯到4层，前往A18登机口再下2层', channels: ['both'], tags: ['餐食'], isRestaurant: false, exclusive: false, verifyLevel: 'unknown' },
+    { name: 'Plaza Premium Lounge (Arrivals)', terminal: 'T3', location: 'Terminal 3一层到达大厅，靠近巴士站', channels: ['dp'], tags: [], isRestaurant: false, exclusive: true, verifyLevel: 'lenient' },
+    { name: 'My Lounge', terminal: 'T3', location: 'Terminal 3', channels: ['pp'], tags: [], isRestaurant: false, exclusive: true, verifyLevel: 'strict' },
+    { name: 'Clubrooms (需额外收费)', terminal: 'T3', location: '通过安检后，前往10号登机口，按指示前往Lounge F No1', channels: ['both'], tags: ['额外收费'], isRestaurant: false, exclusive: false, extraFee: true, verifyLevel: 'unknown' },
+    { name: 'Evergreen Bar & Restaurant', terminal: 'T3', location: '第3航站楼', channels: ['pp'], tags: [], isRestaurant: true, exclusive: true, verifyLevel: 'strict' },
+    { name: 'Blush Lounge by Plaza Premium Group', terminal: 'T4', location: '休息室位于二层', channels: ['both'], tags: ['餐食','淋浴'], isRestaurant: false, exclusive: false, verifyLevel: 'lenient' },
+    { name: 'Plaza Premium Lounge (T4 Departures)', terminal: 'T4', location: '经过护照检查和安检后，位于10号登机口附近', channels: ['both'], tags: ['餐食','淋浴'], isRestaurant: false, exclusive: false, verifyLevel: 'lenient' },
+    { name: 'Plaza Premium Lounge (T5 Departures)', terminal: 'T5', location: '国际出发大厅5号航站楼首层', channels: ['both'], tags: ['餐食'], isRestaurant: false, exclusive: false, verifyLevel: 'unknown' },
+    { name: 'Club Aspire Lounge', terminal: 'T5', location: 'Terminal 5', channels: ['pp'], tags: [], isRestaurant: false, exclusive: true, verifyLevel: 'strict' },
+    { name: 'The Globe 酒吧餐厅', terminal: 'T5', location: '第5航站楼', channels: ['pp'], tags: [], isRestaurant: true, exclusive: true, verifyLevel: 'strict' }
+  ]
+};
+
+let lounges = [];
+let prevAirport = 'LHR';  // 记录上一个机场，用于自动保存
+
+function selectAirport(btn, code) {
+  // ===== 先自动保存当前机场的数据 =====
+  if (code !== prevAirport && lounges.length > 0) {
+    try { localStorage.setItem(STORAGE_KEY + prevAirport, JSON.stringify(lounges)); } catch(e) {}
+  }
+  prevAirport = code;
+
+  document.querySelectorAll('.apt-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentAirport = code;
+  editingIdx = -1;
+  document.getElementById('btnAddEdit').textContent = '+ 添加到列表';
+
+  // 加载目标机场：localStorage > PRESET_DATA > 空数组
+  const saved = localStorage.getItem(STORAGE_KEY + code);
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        lounges = parsed;
+        lounges.forEach((l, idx) => l.id = idx + 1);
+      } else throw new Error('empty or invalid');
+    } catch(e) {
+      // localStorage脏了，回退到预置
+      if (PRESET_DATA[code]) {
+        lounges = PRESET_DATA[code].map((l, idx) => ({ ...l, id: idx + 1 }));
+        localStorage.setItem(STORAGE_KEY + code, JSON.stringify(lounges));
+      } else {
+        lounges = [];
+      }
+    }
+  } else if (PRESET_DATA[code]) {
+    lounges = PRESET_DATA[code].map((l, idx) => ({ ...l, id: idx + 1 }));
+    localStorage.setItem(STORAGE_KEY + code, JSON.stringify(lounges));
+  } else {
+    lounges = [];
+  }
+
+  // 清空表单
+  document.getElementById('fldName').value = '';
+  document.getElementById('fldLocation').value = '';
+  document.getElementById('fldHours').value = '';
+  document.getElementById('fldImportant').value = '';
+  document.querySelectorAll('.check-item').forEach(c => { c.classList.remove('checked'); c.querySelector('b').textContent='☐'; });
+  document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
+  setChannel('both');
+  setVerify('lenient');
+  timeBefore = '';
+
+  renderList();
+  updateStats();
+  refreshAllCounts();
+
+  // 清空输出区
+  document.getElementById('jsonOutput').classList.remove('show');
+}
+
+// ===== 刷新所有机场的数据条数badge =====
+function refreshAllCounts() {
+  document.querySelectorAll('.apt-btn[data-code]').forEach(btn => {
+    const code = btn.dataset.code;
+    if (!code) return;
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY + code);
+      let count = 0;
+      if (raw) { const d = JSON.parse(raw); if (Array.isArray(d)) count = d.length; }
+      // 找到或创建count badge
+      let badge = btn.querySelector('.apt-data-count');
+      if (!badge) {
+        badge = document.createElement('span');
+        badge.className = 'apt-data-count';
+        btn.appendChild(badge);
+      }
+      badge.id = 'cnt_' + code;
+      badge.textContent = count > 0 ? count : '';
+      badge.style.display = count > 0 ? 'inline' : 'none';
+    } catch(e) {}
+  });
+}
+
+// ===== 机场搜索筛选 =====
+function filterAirports() {
+  const query = (document.getElementById('aptSearchInput').value || '').trim().toLowerCase();
+  const box = document.getElementById('airportSelectBox');
+  let visibleCount = 0;
+
+  box.querySelectorAll('.apt-btn:not(.add-apt-btn)').forEach(btn => {
+    const code = (btn.dataset.code || '').toLowerCase();
+    const text = (btn.textContent || '').toLowerCase();
+    const match = !query || text.includes(query) || code.includes(query);
+    btn.style.display = match ? '' : 'none';
+    if (match) visibleCount++;
+  });
+
+  // 始终显示＋按钮
+  const addBtn = box.querySelector('.add-apt-btn');
+  if (addBtn) addBtn.style.display = '';
+}
+
+function setChannel(ch) {
+  currentChannel = ch;
+  document.getElementById('chBoth').className = 'ch-toggle' + (ch==='both'?' active-both':'');
+  document.getElementById('chDp').className = 'ch-toggle' + (ch==='dp'?' active-dp':'');
+  document.getElementById('chPp').className = 'ch-toggle' + (ch==='pp'?' active-pp':'');
+}
+
+function setVerify(v) {
+  verifyLevel = v;
+  document.getElementById('verLenient').className = 'ver-btn' + (v==='lenient'?' active-len':'');
+  document.getElementById('verUnknown').className = 'ver-btn' + (v==='unknown'?' active-unk':'');
+  document.getElementById('verStrict').className = 'ver-btn' + (v==='strict'?' active-str':'');
+}
+
+function setTimeBefore(el, val) {
+  // 如果点击的是已选中的，取消选择
+  if (timeBefore === val) {
+    timeBefore = '';
+    el.classList.remove('active');
+  } else {
+    timeBefore = val;
+    document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+  }
+}
+
+function toggleCheck(el) {
+  el.classList.toggle('checked');
+  const box = el.querySelector('b');
+  if (el.classList.contains('checked')) {
+    box.textContent = '☑';
+  } else {
+    box.textContent = '☐';
+  }
+}
+
+function getCheckedFeatures() {
+  let features = [];
+  document.querySelectorAll('.check-item.checked').forEach(item => {
+    const v = item.getAttribute('data-val');
+    if(v === 'food') features.push('餐食');
+    if(v === 'shower') features.push('淋浴');
+    if(v === 'restaurant') features.push('餐厅用餐');
+    if(v === 'fee') features.push('额外收费');
+    if(v === 'spa') features.push('SPA');
+    if(v === 'business') features.push('商务中心');
+  });
+  return features;
+}
+
+function editItem(i) {
+  editingIdx = i;
+  const l = lounges[i];
+
+  // 回填表单
+  document.getElementById('fldName').value = l.name;
+  document.getElementById('fldTerminal').value = l.terminal || 'T3';
+  document.getElementById('fldLocation').value = l.location || '';
+  document.getElementById('fldHours').value = l.hours || '';
+
+  // 渠道
+  setChannel(l.channels[0] || 'both');
+
+  // 验证级别
+  setVerify(l.verifyLevel || 'lenient');
+
+  // 设施特点 - 先清空再勾选
+  document.querySelectorAll('.check-item').forEach(c => { c.classList.remove('checked'); c.querySelector('b').textContent='☐'; });
+  if (l.tags) l.tags.forEach(t => {
+    const map = {'餐食':'food','淋浴':'shower','额外收费':'fee','SPA':'spa','商务中心':'business'};
+    const val = map[t];
+    if (val) {
+      const el = document.querySelector(`.check-item[data-val="${val}"]`);
+      if (el) { el.classList.add('checked'); el.querySelector('b').textContent='☑'; }
+    }
+  });
+  if (l.isRestaurant) {
+    const el = document.querySelector('.check-item[data-val="restaurant"]');
+    if (el) { el.classList.add('checked'); el.querySelector('b').textContent='☑'; }
+  }
+
+  // 提前使用规则回填
+  document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
+  if (l.timeBefore) {
+    timeBefore = l.timeBefore;
+    const tbEl = document.querySelector(`.time-btn[data-t="${l.timeBefore}"]`);
+    if (tbEl) tbEl.classList.add('active');
+  } else {
+    timeBefore = '';
+  }
+
+  // 重要信息回填
+  document.getElementById('fldImportant').value = l.importantNote || '';
+
+  // 改按钮文字
+  document.getElementById('btnAddEdit').textContent = '✏️ 修改此条数据';
+
+  // 滚动到表单
+  document.querySelector('.entry-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function cancelEdit() {
+  editingIdx = -1;
+  document.getElementById('btnAddEdit').textContent = '+ 添加到列表';
+  // 清空表单
+  document.getElementById('fldName').value = '';
+  document.getElementById('fldLocation').value = '';
+  document.getElementById('fldHours').value = '';
+  document.getElementById('fldImportant').value = '';
+  document.querySelectorAll('.check-item').forEach(c => { c.classList.remove('checked'); c.querySelector('b').textContent='☐'; });
+  document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
+  setChannel('both');
+  setVerify('lenient');
+  timeBefore = '';
+}
+
+function addOrEditLounge() {
+  const name = document.getElementById('fldName').value.trim();
+  if (!name) { alert('请输入休息室名称'); return; }
+
+  const features = getCheckedFeatures();
+  const isRestaurant = features.includes('餐厅用餐');
+
+  const loungeData = {
+    name: name,
+    terminal: document.getElementById('fldTerminal').value,
+    location: document.getElementById('fldLocation').value.trim(),
+    channels: [currentChannel],
+    tags: features.filter(f => f !== '餐厅用餐'),
+    isRestaurant: isRestaurant,
+    exclusive: currentChannel !== 'both',
+    verifyLevel: verifyLevel,
+    hours: document.getElementById('fldHours').value.trim(),
+    timeBefore: timeBefore,
+    importantNote: document.getElementById('fldImportant').value.trim()
+  };
+
+  if (editingIdx >= 0) {
+    // 编辑模式：替换原数据
+    loungeData.id = lounges[editingIdx].id;
+    lounges[editingIdx] = loungeData;
+    editingIdx = -1;
+    document.getElementById('btnAddEdit').textContent = '+ 添加到列表';
+  } else {
+    // 新增模式
+    loungeData.id = lounges.length + 1;
+    lounges.push(loungeData);
+  }
+
+  renderList();
+  updateStats();
+
+  // 清空表单（回到新增状态）
+  document.getElementById('fldName').value = '';
+  document.getElementById('fldLocation').value = '';
+  document.getElementById('fldHours').value = '';
+  document.querySelectorAll('.check-item').forEach(c => { c.classList.remove('checked'); c.querySelector('b').textContent='☐'; });
+  document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
+  setChannel('both');
+  setVerify('lenient');
+  timeBefore = '';
+  document.getElementById('btnAddEdit').textContent = '+ 添加到列表';
+  document.getElementById('fldName').focus();
+}
+
+function renderList() {
+  const el = document.getElementById('dataList');
+  const query = (document.getElementById('searchInput').value || '').trim().toLowerCase();
+
+  // Filter by search
+  let filtered = lounges;
+  if (query) {
+    filtered = lounges.filter(l =>
+      l.name.toLowerCase().includes(query) ||
+      l.terminal.toLowerCase().includes(query) ||
+      (l.location && l.location.toLowerCase().includes(query)) ||
+      (l.hours && l.hours.toLowerCase().includes(query)) ||
+      (l.timeBefore && l.timeBefore.toLowerCase().includes(query)) ||
+      (l.importantNote && l.importantNote.toLowerCase().includes(query))
+    );
+  }
+
+  if (filtered.length === 0) { el.innerHTML = '<div style="text-align:center;padding:20px;color:#aaa;font-size:13px;">'+(query?'没有匹配结果':'暂无数据，请在上方添加休息室')+'</div>'; return; }
+
+  // Group by terminal
+  const termOrder = ['T1','T2','T3','T4','T5','未知',''];
+  const groups = {};
+  filtered.forEach(l => {
+    const t = l.terminal || '未知';
+    if (!groups[t]) groups[t] = [];
+    groups[t].push(l);
+  });
+
+  // Sort terminals
+  const sortedTerms = Object.keys(groups).sort((a,b) => termOrder.indexOf(a) - termOrder.indexOf(b));
+
+  el.innerHTML = sortedTerms.map(term => {
+    const items = groups[term];
+    return `
+    <div class="term-group" data-term="${term}">
+      <div class="term-header" onclick="toggleGroup(this)">
+        <div class="th-left">
+          <span>📍 ${term}</span>
+          <span class="term-count">${items.length} 个</span>
+        </div>
+        <span class="term-arrow">▼</span>
+      </div>
+      <div class="term-body">
+        ${items.map((l, i) => renderDataItem(l, filtered.indexOf(l)))}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderDataItem(l, globalIdx) {
+  const verIcon = l.verifyLevel === 'lenient' ? '🔓' : l.verifyLevel === 'strict' ? '🔒' : '❓';
+  const verColor = l.verifyLevel === 'lenient' ? '#43a047' : l.verifyLevel === 'strict' ? '#e53935' : '#fbc02d';
+
+  // 提前使用规则显示
+  let timeLabel = '';
+  if (l.timeBefore) {
+    const tbMap = {'2h':'2h','3h':'3h','4h':'4h','any':'随时','unknown':'?'};
+    timeLabel = (tbMap[l.timeBefore] || l.timeBefore);
+  }
+
+  // meta行组合：位置 + 营业时间 + 设施 + 提前规则
+  let metaParts = [];
+  if (l.location) metaParts.push(l.location.length > 25 ? l.location.slice(0,25)+'...' : l.location);
+  if (l.hours) metaParts.push('🕐'+l.hours);
+  if (timeLabel) metaParts.push('✈️'+timeLabel);
+  if (l.tags.length) metaParts.push(l.tags.join(','));
+  const metaStr = metaParts.join(' · ') || '—';
+
+  // 重要信息（单独一行醒目显示）
+  const noteHtml = l.importantNote ? `<div class="di-important">⚠️ ${l.importantNote}</div>` : '';
+
+  return `
+  <div class="data-item ${l.channels[0]==='both'?'border-both':l.channels[0]==='pp'?'border-pp':'border-dp'}">
+    <div>
+      <div class="di-name" title="${l.name}">${l.name} ${verIcon}</div>
+      <div class="di-meta">${metaStr}</div>
+      ${noteHtml}
+    </div>
+    <div style="display:flex;align-items:center;gap:4px;">
+      <div class="di-badges">
+        ${l.channels[0]==='both'?'<span class="di-badge dp">龙</span><span class="di-badge pp">PP</span>':l.channels[0]==='pp'?'<span class="di-badge pp">PP</span>':l.channels[0]==='dp'?'<span class="di-badge dp">腾</span>':''}
+        ${l.isRestaurant?'<span class="di-badge rest">餐</span>':''}
+        ${timeLabel?`<span class="di-badge" style="background:#fff3e0;color:#e65100;border:1px solid #ffcc80">${timeLabel}</span>`:''}
+        <span class="di-badge" style="background:${verColor}22;color:${verColor}">${verIcon}</span>
+      </div>
+      <button class="edit-btn" onclick="editItem(${globalIdx})" title="点击编辑这条数据">✏️</button>
+      <button class="delete-btn" onclick="removeItem(${globalIdx})" title="删除">× </button>
+    </div>
+  </div>`;
+}
+
+function toggleGroup(header) {
+  header.parentElement.classList.toggle('collapsed');
+}
+
+function removeItem(i) {
+  if (editingIdx === i) { cancelEdit(); }  // 如果正在编辑被删的条目，退出编辑模式
+  else if (editingIdx > i) editingIdx--;    // 如果删除的是编辑项之前的，索引减1
+  lounges.splice(i, 1);
+  // Re-index
+  lounges.forEach((l,idx) => l.id = idx+1);
+  renderList(); updateStats();
+}
+
+function updateStats() {
+  document.getElementById('totalCount').textContent = lounges.length;
+  document.getElementById('dpCount').textContent = lounges.filter(l=>l.channels[0]=='dp'||l.channels[0]=='both').length;
+  document.getElementById('ppCount').textContent = lounges.filter(l=>l.channels[0]=='pp'||l.channels[0]=='both').length;
+  document.getElementById('bothCount').textContent = lounges.filter(l=>l.channels[0]=='both').length;
+}
+
+function exportData() {
+  if (lounges.length === 0) { alert('没有数据'); return; }
+  
+  // Clean data for export (remove internal fields)
+  const exportLounges = lounges.map(({id, ...rest}) => rest);
+  
+  const jsonStr = JSON.stringify(exportLounges, null, 2);
+  const jsArrayCode = `const lounges_${currentAirport.toLowerCase()} = ${jsonStr};`;
+  
+  const output = document.getElementById('jsonOutput');
+  output.classList.add('show');
+  output.innerHTML = `<div style="color:#90a4ae;margin-bottom:8px">// ===== ${currentAirport} 数据 =====// 复制下方代码粘贴到 index.html 的 lounges 变量中\n</div>${jsArrayCode}\n\n<div style="color:#90a4ae;margin-top:8px">--- 纯JSON版本 ---\n</div>${jsonStr}`;
+  
+  // Auto-select for copying
+  output.onclick = function() {
+    const range = document.createRange();
+    range.selectNodeContents(output);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+    navigator.clipboard.writeText(jsArrayCode).then(() => {
+      const orig = output.innerHTML;
+      output.innerHTML = '<span style="color:#69f0ae;font-size:14px;padding:10px;display:block;">✅ 已复制到剪贴板！直接粘贴到 index.html 即可使用。</span>' + orig;
+      setTimeout(() => { output.innerHTML = orig; }, 2000);
+    });
+  };
+}
+
+function clearAll() {
+  if (!confirm('确定清空所有已录入数据？')) return;
+  lounges = [];
+  renderList();
+  updateStats();
+  document.getElementById('jsonOutput').classList.remove('show');
+  localStorage.removeItem('loungeData_' + currentAirport);
+}
+
+function resetToPreset() {
+  const code = currentAirport;
+  if (!PRESET_DATA[code]) { alert(code + ' 没有预置数据，请先切到有数据的机场（如LHR）再恢复'); return; }
+
+  lounges = PRESET_DATA[code].map((l, idx) => ({ ...l, id: idx + 1 }));
+  // 强制覆盖localStorage
+  try { localStorage.setItem(STORAGE_KEY + code, JSON.stringify(lounges)); } catch(e) {}
+  editingIdx = -1;
+  document.getElementById('btnAddEdit').textContent = '+ 添加到列表';
+  renderList();
+  updateStats();
+
+  const st = document.getElementById('saveStatus');
+  st.textContent = '✅ 已恢复预置数据 ' + lounges.length + ' 条';
+  st.style.color = '#43a047';
+  st.style.opacity = '1';
+  setTimeout(() => { st.style.opacity = '0'; }, 3000);
+}
+
+// ===== 自定义机场管理 =====
+function showAddAirport() {
+  document.getElementById('addAirportPopup').style.display = 'block';
+  document.getElementById('newAptCode').value = '';
+  document.getElementById('newAptName').value = '';
+  document.getElementById('newAptCode').focus();
+}
+
+function hideAddAirport() {
+  document.getElementById('addAirportPopup').style.display = 'none';
+}
+
+function confirmAddAirport() {
+  let code = document.getElementById('newAptCode').value.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+  let name = document.getElementById('newAptName').value.trim();
+
+  if (!code) { alert('请输入机场代码（如 PVG、NRT）'); document.getElementById('newAptCode').focus(); return; }
+  if (!name) { alert('请输入机场中文名'); document.getElementById('newAptName').focus(); return; }
+
+  // 检查是否已存在
+  const existingBtn = document.querySelector(`.apt-btn[data-code="${code}"]`);
+  if (existingBtn && !existingBtn.classList.contains('add-apt-btn')) { alert(code + ' 已存在，不能重复添加'); return; }
+
+  // 创建新按钮
+  const box = document.getElementById('airportSelectBox');
+  const newBtn = document.createElement('button');
+  newBtn.className = 'apt-btn';
+  newBtn.dataset.code = code;
+  newBtn.setAttribute('onclick', `selectAirport(this,'${code}')`);
+  newBtn.innerHTML = code + ' ' + name + '<span class="apt-data-count" id="cnt_' + code + '"></span>';
+
+  // 插入到＋按钮之前
+  const addBtn = box.querySelector('.add-apt-btn');
+  box.insertBefore(newBtn, addBtn);
+
+  // 同步写入localStorage供展示页读取
+  let customAirports = JSON.parse(localStorage.getItem('customAirports') || '{}');
+  customAirports[code] = name;
+  localStorage.setItem('customAirports', JSON.stringify(customAirports));
+
+  // 隐藏弹窗并切换到新机场
+  hideAddAirport();
+  selectAirport(newBtn, code);
+
+  const st = document.getElementById('saveStatus');
+  st.textContent = '✅ 已添加机场 ' + code + ' (' + name + ')，可以开始录入数据了';
+  st.style.color = '#3949ab';
+  st.style.opacity = '1';
+  setTimeout(() => { st.style.opacity = '0'; }, 3000);
+}
+
+// 页面加载时恢复自定义机场
+(function restoreCustomAirports() {
+  try {
+    const custom = JSON.parse(localStorage.getItem('customAirports') || '{}');
+    Object.entries(custom).forEach(([code, name]) => {
+      if (!document.querySelector(`.apt-btn[data-code="${code}"]`)) {
+        const box = document.getElementById('airportSelectBox');
+        const newBtn = document.createElement('button');
+        newBtn.className = 'apt-btn';
+        newBtn.dataset.code = code;
+        newBtn.setAttribute('onclick', `selectAirport(this,'${code}')`);
+        newBtn.innerHTML = code + ' ' + name + '<span class="apt-data-count" id="cnt_' + code + '"></span>';
+        const addBtn = box.querySelector('.add-apt-btn');
+        box.insertBefore(newBtn, addBtn);
+      }
+    });
+  } catch(e) {}
+})();
+
+// ===== 自动保存/加载 =====
+const STORAGE_KEY = 'loungeData_';
+
+function saveData() {
+  if (lounges.length === 0) { alert('没有数据可保存'); return; }
+
+  const key = STORAGE_KEY + currentAirport;
+  localStorage.setItem(key, JSON.stringify(lounges));
+  // Also save a global index of all airports
+  let airports = JSON.parse(localStorage.getItem('loungeAirports') || '[]');
+  if (!airports.includes(currentAirport)) airports.push(currentAirport);
+  localStorage.setItem('loungeAirports', JSON.stringify(airports));
+
+  // Show save status
+  const st = document.getElementById('saveStatus');
+  st.textContent = '✅ 已保存 ' + lounges.length + ' 条数据到本地';
+  st.style.opacity = '1';
+  setTimeout(() => { st.style.opacity = '0'; }, 2500);
+}
+
+function loadData() {
+  const key = STORAGE_KEY + currentAirport;
+  const saved = localStorage.getItem(key);
+  if (saved) {
+    lounges = JSON.parse(saved);
+    // Re-index
+    lounges.forEach((l, idx) => l.id = idx + 1);
+    renderList();
+    updateStats();
+    return true;
+  }
+  return false;
+}
+
+// Auto-load LHR data on page open
+(function() {
+  const saved = localStorage.getItem(STORAGE_KEY + 'LHR');
+  if (saved) {
+    lounges = JSON.parse(saved);
+    lounges.forEach((l, idx) => l.id = idx + 1);
+    renderList(); updateStats();
+  } else if (PRESET_DATA.LHR) {
+    lounges = PRESET_DATA.LHR.map((l, idx) => ({ ...l, id: idx + 1 }));
+    localStorage.setItem(STORAGE_KEY + 'LHR', JSON.stringify(lounges));
+    renderList(); updateStats();
+  }
+  refreshAllCounts();
+})();
+// ===== 全量备份/恢复 =====
+function backupAllData() {
+  // 收集所有机场数据
+  const airports = JSON.parse(localStorage.getItem('loungeAirports') || '[]');
+  const customApt = JSON.parse(localStorage.getItem('customAirports') || '{}');
+
+  // 合并所有已知机场（包括自定义的但可能没数据的）
+  const allCodes = new Set([...airports, ...Object.keys(customApt), 'LHR','HKG','CPH']);
+
+  const backup = {
+    version: '1.0',
+    exportDate: new Date().toISOString(),
+    customAirports: customApt,
+    data: {}
+  };
+
+  let totalCount = 0;
+  allCodes.forEach(code => {
+    const key = STORAGE_KEY + code;
+    const raw = localStorage.getItem(key);
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          backup.data[code] = parsed;
+          totalCount += parsed.length;
+        }
+      } catch(e) {}
+    }
+  });
+
+  if (totalCount === 0) { alert('没有任何数据可备份'); return; }
+
+  const jsonStr = JSON.stringify(backup, null, 2);
+
+  // 触发下载
+  const blob = new Blob([jsonStr], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'LoungePass_备份_' + new Date().toLocaleDateString('zh-CN').replace(/\//g,'-') + '.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  const st = document.getElementById('saveStatus');
+  st.textContent = '📦 已备份 ' + Object.keys(backup.data).length + ' 个机场 / ' + totalCount + ' 条数据';
+  st.style.color = '#0277bd';
+  st.style.opacity = '1';
+  setTimeout(() => { st.style.opacity = '0'; }, 4000);
+}
+
+function copyBackupToClipboard() {
+  // 复用备份数据收集逻辑
+  const airports = JSON.parse(localStorage.getItem('loungeAirports') || '[]');
+  const customApt = JSON.parse(localStorage.getItem('customAirports') || '{}');
+  const allCodes = new Set([...airports, ...Object.keys(customApt), 'LHR','HKG','CPH']);
+  const backup = {
+    version: '1.0',
+    exportDate: new Date().toISOString(),
+    customAirports: customApt,
+    data: {}
+  };
+  let totalCount = 0;
+  allCodes.forEach(code => {
+    const raw = localStorage.getItem(STORAGE_KEY + code);
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          backup.data[code] = parsed;
+          totalCount += parsed.length;
+        }
+      } catch(e) {}
+    }
+  });
+  if (totalCount === 0) { alert('没有任何数据可复制'); return; }
+
+  const jsonStr = JSON.stringify(backup, null, 2);
+
+  // 弹窗显示+自动复制
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  overlay.innerHTML = `
+    <div style="background:white;border-radius:14px;padding:20px;max-width:600px;width:100%;max-height:80vh;display:flex;flex-direction:column;">
+      <h3 style="margin-bottom:10px;font-size:15px;color:#333;">📋 数据已就绪 (${Object.keys(backup.data).length}机场/${totalCount}条)</h3>
+      <textarea readonly style="width:100%;height:50vh;border:2px solid #e0e0e0;border-radius:8px;padding:12px;font-family:monospace;font-size:11px;resize:none;background:#f8f8f8;color:#333;">${jsonStr.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</textarea>
+      <div style="display:flex;gap:8px;margin-top:12px;">
+        <button id="copyBtn" style="flex:1;padding:11px;border:none;border-radius:8px;background:#6a1b9a;color:white;font-size:14px;font-weight:600;cursor:pointer;">📋 一键复制</button>
+        <button onclick="this.closest('.fixed,.style').remove()" style="padding:11px 20px;border:2px solid #ddd;border-radius:8px;background:white;color:#666;font-size:14px;cursor:pointer;">关闭</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+
+  document.getElementById('copyBtn').onclick = function() {
+    navigator.clipboard.writeText(jsonStr).then(() => {
+      this.textContent = '✅ 已复制！粘贴给欧阳即可';
+      this.style.background = '#43a047';
+    }).catch(() => {
+      // fallback
+      const ta = overlay.querySelector('textarea');
+      ta.select();
+      document.execCommand('copy');
+      this.textContent = '✅ 已复制！粘贴给欧阳即可';
+      this.style.background = '#43a047';
+    });
+  };
+}
+
+function restoreBackup(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const backup = JSON.parse(e.target.result);
+      if (!backup.data || !backup.version) { alert('不是有效的备份数据文件'); return; }
+
+      const airportCount = Object.keys(backup.data).length;
+      let loungeCount = 0;
+
+      // 恢复每个机场的数据
+      Object.entries(backup.data).forEach(([code, data]) => {
+        localStorage.setItem(STORAGE_KEY + code, JSON.stringify(data));
+        loungeCount += data.length;
+      });
+
+      // 恢复自定义机场列表
+      if (backup.customAirports) {
+        localStorage.setItem('customAirports', JSON.stringify(backup.customAirports));
+      }
+
+      // 更新机场索引列表
+      localStorage.setItem('loungeAirports', JSON.stringify(Object.keys(backup.data)));
+
+      const confirmRestore = confirm(
+        '检测到备份文件：' + backup.exportDate.slice(0,16) + '\n' +
+        '包含 ' + airportCount + ' 个机场 / ' + loungeCount + ' 条数据\n\n' +
+        '确认恢复？当前未保存的数据会被覆盖。'
+      );
+      if (!confirmRestore) return;
+
+      // 刷新页面以重新加载所有数据
+      const st = document.getElementById('saveStatus');
+      st.textContent = '✅ 恢复成功！正在刷新...';
+      st.style.color = '#2e7d32';
+      st.style.opacity = '1';
+
+      setTimeout(() => location.reload(), 1200);
+
+    } catch(err) {
+      alert('读取备份文件失败：' + err.message);
+    }
+  };
+  reader.readAsText(file);
+  // 清空input，允许重复选择同一文件
+  event.target.value = '';
+}
+</script>
+</body>
+</html>
