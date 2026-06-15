@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<title>机场贵宾厅查询 · LoungePass</title>
+
+<!-- 微信分享卡片 -->
+<meta name="description" content="免费查询全球机场贵宾厅覆盖：龙腾出行 vs Priority Pass 对比，含营业时间+验证规则+实测攻略">
+<meta property="og:title" content="✈️ 机场贵宾厅智能查询工具">
+<meta property="og:description" content="希思罗/香港/哥本哈根等10+机场，龙腾 vs PP 实时对比">
+<meta property="og:type" content="website">
+
+<style>
+  /* ===== Reset & Base ===== */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --primary: #1a237e;
+    --primary-light: #3949ab;
+    --dp-color: #e65100;
+    --pp-color: #2e7d32;
+    --bg: #f0f2f5;
+    --card: #ffffff;
+    --text: #1a1a1a;
+    --text-secondary: #666;
+    --text-muted: #999;
+    --border: #eee;
+    --radius: 12px;
+  }
+  html { -webkit-text-size-adjust: 100%; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: -apple-system, 'PingFang SC', 'Helvetica Neue', 'Microsoft YaHei', sans-serif;
+    background: var(--bg); color: var(--text);
+    font-size: 14px; line-height: 1.5;
+    padding-bottom: env(safe-area-inset-bottom);
+    /* 禁止下拉刷新干扰（微信内） */
+    overscroll-behavior-y: contain;
+  }
+
+  /* ===== Header ===== */
+  .header {
+    background: linear-gradient(135deg, #0d1642 0%, var(--primary) 50%, var(--primary-light) 100%);
+    color: white; padding: 16px 14px 18px; text-align: center;
+    position: relative; overflow: hidden;
+  }
+  /* 装饰性背景纹理 */
+  .header::before {
+    content: ''; position: absolute; top: -30px; right: -20px;
+    width: 120px; height: 120px; border-radius: 50%;
+    background: rgba(255,255,255,0.05); pointer-events: none;
+  }
+  .header::after {
+    content: ''; position: absolute; bottom: -40px; left: -10px;
+    width: 80px; height: 80px; border-radius: 50%;
+    background: rgba(255,255,255,0.04); pointer-events: none;
+  }
+  .header h1 { font-size: 17px; font-weight: 700; letter-spacing: 0.3px; position: relative; z-index: 1; }
+  .header p { font-size: 11.5px; opacity: 0.8; margin-top: 2px; position: relative; z-index: 1; }
+
+  /* Airport Selector - 紧凑搜索式 */
+  .airport-selector {
+    display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px;
+    padding: 8px 10px; background: rgba(255,255,255,0.09); border-radius: var(--radius);
+    border: 1px solid rgba(255,255,255,0.12); justify-content: center; align-items: center;
+    position: relative; z-index: 1;
+  }
+  .apt-search-wrap { width: 100%; margin-bottom: 4px; position: relative; }
+  .apt-search-wrap input {
+    width: 100%; padding: 6px 10px 6px 28px; border: 1.5px solid rgba(255,255,255,0.2); border-radius: 8px;
+    font-size: 12px; outline: none; transition: border-color 0.2s; font-family: inherit;
+    background: rgba(255,255,255,0.1); color: white; caret-color: white;
+    border-radius: 8px;
+  }
+  .apt-search-wrap input::placeholder { color: rgba(255,255,255,0.4); font-size: 11.5px; }
+  .apt-search-wrap input:focus { border-color: rgba(255,255,255,0.5); outline: none; }
+  .apt-search-icon { position: absolute; left: 9px; top: 50%; transform: translateY(-50%); color: rgba(255,255,255,0.35); font-size: 11px; pointer-events: none; }
+  .apt-btn {
+    padding: 5px 10px; border-radius: 14px; border: 1.5px solid rgba(255,255,255,0.22);
+    background: rgba(255,255,255,0.08); cursor: pointer; font-size: 11px; font-weight: 600;
+    color: rgba(255,255,255,0.85); transition: all 0.2s; user-select: none;
+    display: inline-flex; align-items: center; gap: 3px; white-space: nowrap;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .apt-btn:active { transform: scale(0.95); }
+  .apt-btn.active { background: white; color: var(--primary); border-color: white; font-weight: 700; box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
+  .apt-count {
+    background: rgba(255,255,255,0.16); font-size: 9px; padding: 0 4px; border-radius: 7px; font-weight: 700; min-width: 14px; text-align: center;
+  }
+  .apt-btn.active .apt-count { background: rgba(25,27,78,0.12); }
+
+  /* ===== Container ===== */
+  .container { max-width: 480px; margin: 0 auto; padding: 10px 12px 24px; }
+
+  /* Channel Section */
+  .channel-section { background: var(--card); border-radius: var(--radius); padding: 14px 14px 12px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+  .section-title { font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 10px; display: flex; align-items: center; gap: 5px; }
+  .channels { display: flex; gap: 8px; }
+  .channel-btn {
+    flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 11px 8px; border-radius: 10px; border: 2px solid var(--border);
+    background: var(--card); cursor: pointer; transition: all 0.15s; font-size: 13px; font-weight: 600;
+    user-select: none; -webkit-tap-highlight-color: transparent;
+  }
+  .channel-btn:active { transform: scale(0.97); }
+  .channel-btn.active-dp { border-color: var(--dp-color); background: #fff8f0; color: var(--dp-color); }
+  .channel-btn.active-pp { border-color: var(--pp-color); background: #f1f8e9; color: var(--pp-color); }
+  .channel-btn.inactive { border-color: var(--border); color: #bbb; background: #fafafa; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .dot.dragonpass { background: var(--dp-color); }
+  .dot.pp { background: var(--pp-color); }
+  .channel-btn.inactive .dot { opacity: 0.4; }
+
+  /* Stats Bar - 暂时隐藏 */
+  .stats-bar { display: none; }
+  .stat-card {
+    background: var(--card); border-radius: 10px; padding: 10px 6px; text-align: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .stat-num { font-size: 22px; font-weight: 800; line-height: 1.2; letter-spacing: -0.5px; }
+  .stat-label { font-size: 10.5px; color: var(--text-muted); margin-top: 2px; font-weight: 500; }
+  .stat-card.dp .stat-num { color: var(--dp-color); }
+  .stat-card.pp .stat-num { color: var(--pp-color); }
+  .stat-card.overlap .stat-num { color: #1565c0; }
+  .stat-card.exclusive .stat-num { color: #7b1fa2; }
+
+  /* Terminal Tabs - 横向滚动 */
+  .terminal-tabs { display: flex; gap: 6px; margin-bottom: 10px; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 4px; scrollbar-width: none; }
+  .terminal-tabs::-webkit-scrollbar { display: none; }
+  .tab-btn {
+    flex-shrink: 0; padding: 7px 16px; border-radius: 20px; border: none;
+    font-size: 12.5px; font-weight: 600; cursor: pointer; transition: all 0.15s;
+    background: #e8e8e8; color: #777; -webkit-tap-highlight-color: transparent;
+  }
+  .tab-btn:active { transform: scale(0.96); }
+  .tab-btn.active { background: var(--primary-light); color: white; box-shadow: 0 2px 6px rgba(57,73,171,0.3); }
+  .tab-count { font-size: 10px; opacity: 0.75; margin-left: 2px; font-weight: 400; }
+  .tab-btn.active .tab-count { opacity: 1; }
+
+  /* AI Tip */
+  .ai-tip {
+    background: linear-gradient(135deg, #e8eaf6, #ede7f6); border-radius: var(--radius);
+    padding: 12px 14px; margin-bottom: 10px; font-size: 12.5px; color: #303f9f; line-height: 1.55;
+    display: none; /* 默认隐藏，有内容时显示 */
+  }
+  .ai-tip.show { display: block; }
+  .ai-tip strong { color: var(--primary); }
+
+  /* ===== Lounge Cards ===== */
+  .lounge-list { display: flex; flex-direction: column; gap: 8px; }
+  .lounge-card {
+    background: var(--card); border-radius: var(--radius); padding: 13px 14px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    border-left: 4px solid transparent; transition: transform 0.12s;
+    position: relative;
+  }
+  .lounge-card:active { transform: scale(0.99); }
+  .lounge-card.border-dp { border-left-color: var(--dp-color); }
+  .lounge-card.border-pp { border-left-color: var(--pp-color); }
+  .lounge-card.border-both { border-left-color: var(--primary-light); }
+  .lounge-card.border-exclusive { border-left-color: #7b1fa2; }
+
+  /* Card Header */
+  .lounge-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; gap: 8px; }
+  .lounge-name { font-size: 14px; font-weight: 600; color: var(--text); line-height: 1.35; display: flex; align-items: center; gap: 5px; word-break: break-word; }
+
+  /* Verify Dot - 更大更易识别 */
+  .ver-dot {
+    width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+    display: inline-block;
+  }
+  .ver-lenient { background: #a5d6a7; border: 1.5px solid #66bb6a; }
+  .ver-unknown { background: #fff59d; border: 1.5px solid #ffd54f; }
+  .ver-strict { background: #ef9a9a; border: 1.5px solid #e57373; }
+
+  .lounge-badges { display: flex; gap: 3px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; max-width: 140px; }
+  .badge {
+    padding: 2px 7px; border-radius: 8px; font-size: 10px; font-weight: 600; white-space: nowrap;
+  }
+  .badge-dp { background: #fff8f0; color: var(--dp-color); }
+  .badge-pp { background: #f4f8ec; color: var(--pp-color); }
+  .badge-excl { background: #faf0fa; color: #7b1fa2; }
+  .badge-rest { background: #fef0f0; color: #c62828; }
+  .badge-time { background: #fff3e0; color: #e65100; }
+  .badge-ver { padding: 1px 6px; border-radius: 6px; font-size: 10px; }
+
+  /* Card Body */
+  .lounge-terminal { font-size: 11.5px; color: var(--text-muted); font-weight: 500; }
+  .lounge-location { font-size: 11.5px; color: #888; margin-top: 3px; line-height: 1.45; }
+  .lounge-location:empty { display: none; }
+
+  .lounge-tags { display: flex; gap: 5px; margin-top: 7px; flex-wrap: wrap; }
+  .tag { font-size: 10.5px; padding: 2.5px 7px; border-radius: 5px; background: #f5f5f5; color: #777; font-weight: 500; }
+  .tag-food { background: #fff8e1; color: #e65100; }
+  .tag-shower { background: #e3f2fd; color: #1976d2; }
+  .tag-fee { background: #fce4ec; color: #c62828; }
+  .tag-hours { background: #f3e5f5; color: #7b1fa2; }
+  .tag-before { background: #fff3e0; color: #e65100; }
+
+  /* 重要信息提示条 */
+  .lounge-important { font-size: 12px; color: #e65100; background: #fff8e1; padding: 7px 10px; border-radius: 8px; margin-top: 6px; border-left: 3px solid #e65100; line-height: 1.4; }
+
+  /* Empty State */
+  .empty-state {
+    text-align: center; padding: 36px 20px; color: #aaa;
+  }
+  .empty-state .emoji { font-size: 36px; margin-bottom: 8px; }
+  .empty-state p { font-size: 14px; margin-bottom: 4px; color: #999; font-weight: 500; }
+  .empty-state small { font-size: 12px; color: #bbb; }
+
+  /* Footer */
+  .footer { text-align: center; padding: 16px 12px 20px; color: #bbb; font-size: 11px; }
+
+  /* ===== 底部CTA条 ===== */
+  .bottom-bar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: white; padding: 10px 16px;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.06);
+    z-index: 100; display: flex; gap: 10px; align-items: center;
+    padding-bottom: calc(10px + env(safe-area-inset-bottom));
+  }
+  .bottom-bar-text { flex: 1; font-size: 12px; color: #666; line-height: 1.35; }
+  .bottom-bar-text strong { color: var(--primary); font-size: 12.5px; }
+  .bottom-bar-btn {
+    padding: 9px 16px; border-radius: 20px; border: none;
+    background: var(--primary-light); color: white; font-size: 12.5px; font-weight: 600;
+    cursor: pointer; white-space: nowrap; -webkit-tap-highlight-color: transparent;
+    flex-shrink: 0;
+  }
+  .bottom-bar-btn:active { opacity: 0.85; transform: scale(0.97); }
+
+  /* 给底部bar留空间 */
+  .container { padding-bottom: 70px; }
+
+  /* ===== 响应式微调 ===== */
+  @media (max-width: 360px) {
+    .stats-bar { grid-template-columns: repeat(2, 1fr); }
+    .stat-card { padding: 8px 4px; }
+    .stat-num { font-size: 20px; }
+    .channel-btn { padding: 9px 6px; font-size: 12px; }
+    .lounge-name { font-size: 13px; }
+    .tab-btn { padding: 6px 13px; font-size: 11.5px; }
+  }
+  @media (min-width: 481px) {
+    .container { padding: 12px 16px 30px; }
+    .lounge-card { padding: 14px 16px; }
+    .lounge-name { font-size: 15px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>✈️ 机场贵宾厅智能对比</h1>
+  <div class="airport-selector" id="airportSelector"></div>
+  <p style="position:relative;z-index:1">选择你拥有的渠道，查看可用休息室</p>
+</div>
+
+<div class="container">
+
+<!-- Channel Selection -->
+<div class="channel-section">
+  <div class="section-title">📱 我有这些渠道</div>
+  <div class="channels">
+    <button class="channel-btn active-dp" data-ch="dp" onclick="toggleChannel('dp')">
+      <span class="dot dragonpass"></span> 龙腾出行
+    </button>
+    <button class="channel-btn active-pp" data-ch="pp" onclick="toggleChannel('pp')">
+      <span class="dot pp"></span> PP
+    </button>
+  </div>
+</div>
+
+<!-- Stats -->
+<div class="stats-bar" id="statsBar">
+  <div class="stat-card dp"><div class="stat-num" id="dpCount">-</div><div class="stat-label">龙腾覆盖</div></div>
+  <div class="stat-card pp"><div class="stat-num" id="ppCount">-</div><div class="stat-label">PP覆盖</div></div>
+  <div class="stat-card overlap"><div class="stat-num" id="overlapCount">-</div><div class="stat-label">重叠场所</div></div>
+  <div class="stat-card exclusive"><div class="stat-num" id="exclusiveCount">-</div><div class="stat-label">PP独占</div></div>
+</div>
+
+<!-- Terminal Tabs -->
+<div class="terminal-tabs" id="termTabs"></div>
+
+<!-- AI Recommendation -->
+<div class="ai-tip" id="aiTip"></div>
+
+<!-- Lounge Cards -->
+<div class="lounge-list" id="loungeList"></div>
+
+</div>
+
+<div class="footer">LoungePass v0.2 · 数据来源：用户App实测</div>
+
+<!-- 底部CTA条 -->
+<div class="bottom-bar" id="bottomBar">
+  <div class="bottom-bar-text">
+    <strong>LoungePass</strong><br>
+    <span id="bottomBarHint">全球10+机场贵宾厅数据持续更新中</span>
+  </div>
+  <button class="bottom-bar-btn" onclick="scrollToTop()">回到顶部 ↑</button>
+</div>
+
+<script>
+// ===== 机场元数据（全量硬编码） =====
+const AIRPORTS = {
+  LHR: { code: 'LHR', name: 'LHR', country: '未知', flag: '?' },
+  HKG: { code: 'HKG', name: 'HKG', country: '未知', flag: '?' },
+  CPH: { code: 'CPH', name: 'CPH', country: '未知', flag: '?' },
+  KUL: { code: 'KUL', name: '吉隆坡国际机场', country: '马来西亚', flag: '🇲🇾' },
+  MAD: { code: 'MAD', name: '马德里-巴拉哈斯机场', country: '西班牙', flag: '🇪🇸' },
+  HAN: { code: 'HAN', name: '河内内排国际机场', country: '越南', flag: '🇻🇳' },
+  CAI: { code: 'CAI', name: '开罗国际机场', country: '埃及', flag: '🇪🇬' },
+  BCN: { code: 'BCN', name: '巴塞罗那-埃尔普拉特机场', country: '西班牙', flag: '🇪🇸' },
+  FCO: { code: 'FCO', name: '罗马-菲乌米奇诺机场', country: '意大利', flag: '🇮🇹' },
+  DEL: { code: 'DEL', name: '新德里英迪拉·甘地国际机场', country: '印度', flag: '🇮🇳' },
+  YVR: { code: 'YVR', name: '温哥华国际机场', country: '加拿大', flag: '🇨🇦' },
+  JED: { code: 'JED', name: '吉达-阿卜杜勒·阿齐兹国王国际机场', country: '沙特阿拉伯', flag: '🇸🇦' },
+  BUD: { code: 'BUD', name: '布达佩斯李斯特·费伦茨国际机场', country: '匈牙利', flag: '🇺🇶' },
+  CMB: { code: 'CMB', name: '科伦坡-班达拉奈克国际机场', country: '斯里兰卡', flag: '🇱🇰' },
+  HEL: { code: 'HEL', name: '赫尔辛基万塔机场', country: '芬兰', flag: '🇫🇮' },
+  MEL: { code: 'MEL', name: '墨尔本机场', country: '澳大利亚', flag: '🇦🇺' },
+  LIN: { code: 'LIN', name: '米兰利纳特机场', country: '意大利', flag: '🇮🇹' },
+  MRU: { code: 'MRU', name: '毛里求斯-西沃萨古尔·拉姆古兰爵士国际机场', country: '毛里求斯', flag: '🇲🇺' },
+  AMS: { code: 'AMS', name: '阿姆斯特丹史基浦机场', country: '荷兰', flag: '🇳🇱' },
+  MLA: { code: 'MLA', name: '马耳他国际机场', country: '马耳他', flag: '🇲🇼' },
+  PRG: { code: 'PRG', name: '布拉格-瓦茨拉夫·哈维尔国际机场', country: '捷克', flag: '🇨🇿' },
+  BER: { code: 'BER', name: '勃兰登堡国际机场', country: '德国', flag: '🇩🇪' },
+  KIX: { code: 'KIX', name: '大阪关西国际机场', country: '日本', flag: '🇯🇵' },
+  BRU: { code: 'BRU', name: '布鲁塞尔机场', country: '比利时', flag: '🇧🇪' },
+  DUB: { code: 'DUB', name: '都柏林机场', country: '爱尔兰', flag: '🇪🇺' },
+  DLU: { code: 'DLU', name: '大理凤仪机场', country: '中国', flag: '🇨🇳' },
+  BKI: { code: 'BKI', name: '亚庇国际机场', country: '马来西亚', flag: '🇲🇾' },
+  OSL: { code: 'OSL', name: '奥斯陆加勒穆恩机场', country: '挪威', flag: '🇳🇴' },
+  ADD: { code: 'ADD', name: '亚的斯亚贝巴机场', country: '埃塞俄比亚', flag: '🇪🇹a' },
+  { code: 'IAD', name: '华盛顿杜勒斯国际机场', country: '美国', flag: '🇺🇸' },
+  { code: 'STN', name: '伦敦斯坦斯特德机场', country: '英国', flag: '🇬🇧' },
+};
+
+
+// ===== 预置数据（全部机场，无需localStorage即可显示） =====
+const PRESET_DATA = {
+  LHR: [
+    {"id": 1, "name": "Plaza Premium Lounge", "terminal": "T2", "channels": ["both"], "location": "遵循航站楼内A3 Lounge标识至4楼贵宾室", "tags": ["餐食", "淋浴"], "verifyLevel": "lenient", "exclusive": false, "isRestaurant": false},
+    {"id": 2, "name": "No. 1 Lounge", "terminal": "T2", "channels": ["both"], "location": "Terminal 2出发大厅", "tags": ["餐食"], "verifyLevel": "lenient", "exclusive": false, "isRestaurant": false},
+    {"id": 3, "name": "No. 1 Lounge / No. 1 Heathrow", "terminal": "T3", "channels": ["both"], "location": "通过护照检查后，乘电梯到4层，前往A18登机口再下2层", "tags": ["餐食"], "verifyLevel": "lenient", "exclusive": false, "isRestaurant": false},
+    {"id": 4, "name": "Plaza Premium Lounge (Arrivals)", "terminal": "T3", "channels": ["both"], "location": "Terminal 3一层到达大厅，靠近巴士站", "verifyLevel": "lenient", "exclusive": false, "isRestaurant": false},
+    {"id": 5, "name": "My Lounge", "terminal": "T3", "channels": ["pp"], "location": "Terminal 3", "verifyLevel": "strict", "exclusive": true, "isRestaurant": false},
+    {"id": 6, "name": "Clubrooms (需额外收费)", "terminal": "T3", "channels": ["both"], "location": "通过安检后，前往10号登机口，按指示前往Lounge F No1", "tags": ["额外收费"], "verifyLevel": "lenient", "exclusive": false, "isRestaurant": false},
+    {"id": 7, "name": "Evergreen Bar & Restaurant", "terminal": "T3", "channels": ["pp"], "location": "第3航站楼", "verifyLevel": "strict", "exclusive": true, "isRestaurant": true},
+    {"id": 8, "name": "Blush Lounge by Plaza Premium Group", "terminal": "T4", "channels": ["both"], "location": "休息室位于二层", "tags": ["餐食", "淋浴"], "verifyLevel": "lenient", "exclusive": false, "isRestaurant": false},
+    {"id": 9, "name": "Plaza Premium Lounge (T4 Departures)", "terminal": "T4", "channels": ["both"], "location": "经过护照检查和安检后，位于10号登机口附近", "tags": ["餐食", "淋浴"], "verifyLevel": "lenient", "exclusive": false, "isRestaurant": false},
+    {"id": 10, "name": "Plaza Premium Lounge (T5 Departures)", "terminal": "T5", "channels": ["both"], "location": "国际出发大厅5号航站楼首层", "tags": ["餐食"], "verifyLevel": "strict", "exclusive": false, "isRestaurant": false},
+    {"id": 11, "name": "The Globe 酒吧餐厅", "terminal": "T5", "channels": ["pp"], "location": "第5航站楼", "verifyLevel": "strict", "exclusive": true, "isRestaurant": true},
+  ],
+  HKG: [
+    {"id": 1, "name": "Plaza Premium Lounge (Gate 1)", "terminal": "T1", "channels": ["both"], "location": "国际出发,T1航站楼,安检后 - 经过护照检查和安全检查后，贵宾室位于出发层，靠近 1 号登机口。", "tags": ["餐食", "淋浴", "额外收费"], "verifyLevel": "strict", "exclusive": false, "isRestaurant": false},
+    {"id": 2, "name": "Plaza Premium Lounge (Gate 35)", "terminal": "T1", "channels": ["both"], "location": "国际出发,T1航站楼,安检后 - 通过护照检查和安检后，客人可乘电梯到6楼然后下至5楼休息室。", "tags": ["餐食", "淋浴", "额外收费"], "verifyLevel": "strict", "exclusive": false, "isRestaurant": false},
+    {"id": 3, "name": "Plaza Premium Lounge(Gate 60)", "terminal": "T1", "channels": ["both"], "location": "国际出发,T1航站楼,安检后,休息室位于出发厅第7层,靠近登机口60.", "tags": ["餐食", "淋浴", "额外收费"], "verifyLevel": "strict", "exclusive": false, "isRestaurant": false},
+    {"id": 4, "name": "Kyra Lounge", "terminal": "T1", "channels": ["pp"], "location": "出发 安全检查站后方 护照检查站后方 6 层 23 号登机口附近", "verifyLevel": "strict", "exclusive": true, "isRestaurant": false},
+    {"id": 5, "name": "Kyra Lounge", "terminal": "T1", "channels": ["pp"], "location": "出发 安全检查站后方 护照检查站后方 7 层 40 号登机口附近 西厅 休息室也供从东大厅乘坐班车或步行10-15分钟的乘客进入。请留出足够的时间返回登机口", "verifyLevel": "strict", "exclusive": true, "isRestaurant": false},
+  ],
+  CPH: [
+    {"id": 1, "name": "Aspire Lounge", "terminal": "T2", "channels": ["both"], "location": "国内出发,国际出发,T2航站楼,安检后 - 通过安检后，经过免税区。免税区尽头右转，前往A厅。在到达A厅之前，贵宾室位于右侧，靠近哥本哈根咖啡实验室对面，或正对La Plads餐厅。", "tags": ["餐食", "淋浴"], "verifyLevel": "lenient", "exclusive": false, "isRestaurant": false},
+    {"id": 2, "name": "Carlsberg Aviator Lounge", "terminal": "T2", "channels": ["pp"], "location": "安检内区域 - 通过安全检查后，右转。该贵宾室位于 A 和 B 指廊之间。", "verifyLevel": "strict", "exclusive": true, "isRestaurant": false},
+    {"id": 3, "name": "Eventyr 贵宾室*", "terminal": "T3", "channels": ["dp"], "location": "国际出发,T3航站楼,安检后在出发大厅的右边", "tags": ["餐食", "淋浴"], "verifyLevel": "lenient", "exclusive": true, "isRestaurant": false},
+    {"id": 4, "name": "Pearl Lounge", "terminal": "T3", "channels": ["pp"], "location": "出发 安全检查站后方 护照检查站后方 C 号走廊 C26 号登机口附近 Non-Schengen Area", "verifyLevel": "strict", "exclusive": true, "isRestaurant": false},
+  ],
+  ADD: [
+    {"id": 1, "name": "Plaza Premium Lounge", "terminal": "T1", "channels": ["both"], "location": "国际出发,T2航站楼,安检后 - 通过护照检查和安全检查后，休息室位于 A7 登机口旁边。", "verifyLevel": "lenient", "hours": "24小时营业", "exclusive": false, "isRestaurant": false},
+  ],
+  AMS: [
+    {"id": 1, "name": "Aspire Lounge (No.26)", "terminal": "T1", "channels": ["both"], "location": "国际出发,T1航站楼,安检后 - 通过护照检查和安检后，向右转并按照指示牌前往贵宾室。", "tags": ["餐食"], "verifyLevel": "lenient", "hours": "06:00-21:00", "timeBefore": "3h", "exclusive": false, "isRestaurant": false},
+    {"id": 2, "name": "Aspire Lounge (No.41)", "terminal": "T1", "channels": ["both"], "location": "国际出发,T2航站楼,安检后 - 通过护照检查和安全检查后，请按照指示牌前往 E 登机口。到达 E 登机口后，搭乘自动扶梯上楼，然后按照指示牌前往 41 号航空休息室。", "verifyLevel": "lenient", "hours": "06:00-22:0", "timeBefore": "3h", "exclusive": false, "isRestaurant": false},
+  ],
+  BCN: [
+    {"id": 1, "name": "Sala VIP Pau Casals", "terminal": "T1", "channels": ["both"], "location": "国内出发,国际出发,T1航站楼,经过护照检查和安检后，沿楼梯下行至Sky Center并右转。按照贵宾标志，乘坐楼梯或电梯到达休息室。", "tags": ["淋浴"], "verifyLevel": "lenient", "hours": "04:30 - 最后一趟航班", "timeBefore": "3h", "exclusive": false, "isRestaurant": false},
+    {"id": 2, "name": "Sleep & Fly Business Center", "terminal": "T1", "channels": ["dp"], "location": "国际出发,国内出发,国际到达,国内到达,T1航站楼,安检前 - 贵宾室位于一楼。从抵达区直行，看到 SIXT 标志后右转。然后沿着巴塞罗那-马德里 Corredor Shuttle 巴士的指示牌前行，直行穿过高架桥走廊。穿过滑动门后，贵宾室就在右侧。", "verifyLevel": "lenient", "hours": "07:00-22:00", "exclusive": true, "isRestaurant": false},
+    {"id": 3, "name": "Sala VIP Joan Miro", "terminal": "T1", "channels": ["both"], "location": "国际出发,T1航站楼,经过护照检查和安检后，左转前往 D 号登机口。休息室位于Barcelona免税店附近。", "verifyLevel": "lenient", "hours": "05:00 - 最后一趟航班", "timeBefore": "3h", "exclusive": false, "isRestaurant": false},
+    {"id": 4, "name": "Colomer Lounge (T1)", "terminal": "T1", "channels": ["both"], "location": "国内出发,T1航站楼,空侧 - 经过护照检查和安检后，休息室位于航空班车亭对面。", "verifyLevel": "lenient", "hours": "06:00-21:00", "timeBefore": "3h", "exclusive": false, "isRestaurant": false},
+    {"id": 5, "name": "Premium VIP Lounge", "terminal": "T1", "channels": ["pp"], "location": "陆侧——从到达大厅出发，跟随通往商务中心的指示牌，休息室位于巴塞罗那-马德里空中穿梭/空中桥梁区域内", "verifyLevel": "strict", "exclusive": true, "isRestaurant": false},
+    {"id": 6, "name": "Sala VIP Canudas", "terminal": "T2", "channels": ["both"], "tags": ["淋浴"], "verifyLevel": "lenient", "hours": "06:00-22:00", "timeBefore": "3h", "exclusive": false, "isRestaurant": false},
+  ],
+  BER: [
+    {"id": 1, "name": "Lounge Tempelhof", "terminal": "T1", "channels": ["dp"], "location": "国内出发,国际出发,T1航站楼,安检后 - 安全检查后，休息室位于 E1 层 A20 登机口附近。", "tags": ["餐食", "淋浴"], "verifyLevel": "lenient", "hours": "05:00-21:30", "timeBefore": "3h", "exclusive": true, "isRestaurant": false},
+    {"id": 2, "name": "Lounge Tegel", "terminal": "T1", "channels": ["both"], "location": "国内出发,国际出发,T1航站楼,安檢後 - 休息室位於E1 層，靠近B17 的登機口", "tags": ["餐食", "淋浴"], "verifyLevel": "lenient", "hours": "05:00-21:00", "timeBefore": "3h", "exclusive": false, "isRestaurant": false},
+  ],
+  BKI: [
+    {"id": 1, "name": "Travel Club Lounge", "terminal": "T1", "channels": ["both"], "location": "国内出发,国内航站楼,休息室位于Marrybrown餐厅附近，朝A10号登机口方向。", "verifyLevel": "strict", "hours": "04:00-00:00", "exclusive": false, "isRestaurant": false},
+    {"id": 2, "name": "Travel Club Lounge and Bar  05:00-00:00", "terminal": "T1", "channels": ["both"], "location": "国际出发,国际航站楼,办理完入境手续后，向右转，步行 70 米到达航站楼走廊的尽头。休息室位于 B6 登机口附近。", "verifyLevel": "strict", "hours": "05:00-00:00", "exclusive": false, "isRestaurant": false},
+  ],
+  BRU: [
+    {"id": 1, "name": "Diamond Lounge", "terminal": "T1", "channels": ["both"], "location": "国际出发,国内出发,主航站楼", "tags": ["餐食"], "verifyLevel": "lenient", "hours": "04:30-21:00", "exclusive": false, "isRestaurant": false},
+    {"id": 2, "name": "The View", "terminal": "T1", "channels": ["both"], "location": "国际出发,主航站楼,安检后 - 经过护照检查和安检后，前往 B01 - B05 登机口。登机口对面有楼梯和电梯，可将您带到休息室。", "tags": ["餐食", "淋浴"], "verifyLevel": "lenient", "hours": "05:00-22:00", "exclusive": false, "isRestaurant": false},
+  ],
+  BUD: [
+    {"id": 1, "name": "Plaza Premium Lounge", "terminal": "T2", "channels": ["both"], "location": "国际出发,T2B航站楼,安检后 - 经过护照检查和安全检查后，休息室位于非申根出发区。", "verifyLevel": "lenient", "hours": "05:00-23:00", "exclusive": false, "isRestaurant": false},
+    {"id": 2, "name": "Platinum Lounge (T2A)", "terminal": "T2", "channels": ["both"], "location": "国际出发,T2A航站楼,安检后 - 经过护照检查和安检后，前往 B01 - B05 登机口。登机口对面有楼梯和电梯，可将您带到休息室。", "verifyLevel": "lenient", "hours": "05:00-20:00", "exclusive": false, "isRestaurant": false},
+    {"id": 3, "name": "Platinum Lounge (T2B)", "terminal": "T2", "channels": ["both"], "location": "国际出发,T2B航站楼,B7/B8登机口附近.", "verifyLevel": "lenient", "hours": "05:00-22:00", "exclusive": false, "isRestaurant": false},
+    {"id": 4, "name": "SkyCourt Lounge", "terminal": "T2", "channels": ["both"], "location": "国内出发,国际出发,T2航站楼,安检后 - 通过安检后，请从右侧乘坐扶梯前往 Skycourt 区的夹层楼。", "verifyLevel": "lenient", "hours": "04:30-21:00", "exclusive": false, "isRestaurant": false},
+  ],
+  CAI: [
+    {"id": 1, "name": "CAC Lounge by Plaza Premium Lounge & EAS", "terminal": "T1", "channels": ["both"], "location": "国际出发,T1航站楼,护照和安全检查后,贵宾室First Class Lounge位于一楼和二楼请沿楼梯或乘自动扶梯并遵循标示往 'First Class Lounge'范围.", "verifyLevel": "unknown", "hours": "24小时营业", "exclusive": false, "isRestaurant": false},
+    {"id": 2, "name": "Ahlein Emerald Lounge", "terminal": "T2", "channels": ["both"], "location": "国际出发,T2航站楼,安检后 - 护照检查和安检后，乘坐自动扶梯/电梯到 1 层，休息室位于右侧。", "verifyLevel": "lenient", "hours": "24小时营业", "exclusive": false, "isRestaurant": false},
+    {"id": 3, "name": "AHLEIN - Premium Lounge", "terminal": "T2", "channels": ["both"], "location": "国际出发,T2航站楼,安检后 - 经过护照检查和安全检查后,在免税商店前右转,穿过休息室走廊,会看到休息室的接待标识.", "verifyLevel": "lenient", "hours": "24小时营业", "exclusive": false, "isRestaurant": false},
+    {"id": 4, "name": "CAC Lounge by Plaza Premium Lounge & EAS", "terminal": "T3", "channels": ["both"], "location": "国际出发,T3航站楼,安检后-休息室在右侧。", "verifyLevel": "lenient", "hours": "24小时营业", "exclusive": false, "isRestaurant": false},
+    {"id": 5, "name": "Ahlein Premium Lounge - T3", "terminal": "T3", "channels": ["both"], "location": "国际出发,T3航站楼,安检后 - 经过护照检查和安检后，休息室位于 3 层右侧。", "verifyLevel": "lenient", "hours": "24小时营业", "exclusive": false, "isRestaurant": false},
+    {"id": 6, "name": "CAC Lounge by Plaza Premium Lounge & EAS", "terminal": "T3", "channels": ["both"], "location": "24小时营业国际出发,T3航站楼,安检后 - 通过护照检查和安检后，直行并在进入免税店前左转。继续前行约 50 米。", "verifyLevel": "lenient", "hours": "24小时营业", "exclusive": false, "isRestaurant": false},
+    {"id": 7, "name": "CAC Lounge by Plaza Premium Lounge & EAS", "terminal": "T2", "channels": ["both"], "location": "国际出发,T2航站楼,安检口后转右,休息室位于免税店区前.", "verifyLevel": "lenient", "hours": "24小时营业", "exclusive": false, "isRestaurant": false},
+  ],
+  CMB: [
+    {"id": 1, "name": "Palm Strip Lounge", "terminal": "T1", "channels": ["both"], "location": "国际出发,T1航站楼,离境航站楼,安检后,搭乘自动扶梯后左转并继续前行20米可看到休息室的标志,该休息室位于右侧.", "verifyLevel": "lenient", "hours": "24小时营业", "exclusive": false, "isRestaurant": false},
+    {"id": 2, "name": "Executive Lounge", "terminal": "T1", "channels": ["dp"], "location": "国际出发,主航站楼,1楼6&7号登机区附近.", "verifyLevel": "lenient", "hours": "24小时营业", "exclusive": true, "isRestaurant": false},
+    {"id": 3, "name": "Lotus First Class Lounge", "terminal": "T1", "channels": ["pp"], "location": "出发 安全检查站后方 护照检查站后方 1st 楼 6 and 7 号登机口附近", "verifyLevel": "strict", "hours": "00:00 - 23:59", "exclusive": true, "isRestaurant": false},
+  ],
+  DEL: [
+    {"id": 1, "name": "Encalm Lounge", "terminal": "T1", "channels": ["both"], "location": "国内出发,T1航站楼,安检后 - 通过护照检查和安全检查后，贵宾室位于 1 号航站楼夹层楼 02 层。", "verifyLevel": "lenient", "hours": "24小时营业", "exclusive": false, "isRestaurant": false},
+    {"id": 2, "name": "Encalm Lounge", "terminal": "T2", "channels": ["both"], "location": "国内出发,T2航站楼,办理完安检手续后，柜台位于2楼的国内出境处", "verifyLevel": "lenient", "hours": "24小时营业", "exclusive": false, "isRestaurant": false},
+    {"id": 3, "name": "Encalm Lounge (T3 Arrival)", "terminal": "T3", "channels": ["both"], "location": "国际到达,T3航站楼,地面层，到达大厅，靠近 4 号登机口", "verifyLevel": "lenient", "hours": "24小时营业", "exclusive": false, "isRestaurant": false},
+    {"id": 4, "name": "Encalm Lounge (International T3)", "terminal": "T3", "channels": ["both"], "location": "国际出发,T3航站楼,安检后-休息室位于三楼。", "verifyLevel": "lenient", "hours": "24小时营业", "exclusive": false, "isRestaurant": false},
+    {"id": 5, "name": "Encalm Lounge (Domestic T3)", "terminal": "T3", "channels": ["both"], "location": "国内出发,T3航站楼,安检后-通过安检后，贵宾室位于国内出发大厅的夹层。", "verifyLevel": "lenient", "hours": "24小时营业", "exclusive": false, "isRestaurant": false},
+  ],
+  DLU: [
+    {"id": 1, "name": "龙腾出行商务贵宾厅", "terminal": "T1", "channels": ["dp"], "location": "内出发,主航站楼,面对航站楼大门口向左转直行至云南空港百事特商务贵宾厅，旅客进入大厅后在百事特贵宾接待柜台出示凭证核验，核验通过后按工作人员指引到龙腾出行商务贵宾厅使用服务", "verifyLevel": "lenient", "hours": "07:30-20:00", "exclusive": true, "isRestaurant": false},
+    {"id": 2, "name": "Best Business VIP Lounge", "terminal": "T1", "channels": ["pp"], "location": "出发 安全检查站前方 护照检查站前方 按照标示前往 'Best Business VIP' lounge", "verifyLevel": "strict", "exclusive": true, "isRestaurant": false},
+  ],
+  DUB: [
+    {"id": 1, "name": "T1 Lounge", "terminal": "T1", "channels": ["dp"], "location": "国际出发,T1航站楼", "tags": ["餐食", "淋浴"], "verifyLevel": "lenient", "hours": "04:00-21:00", "exclusive": true, "isRestaurant": false},
+    {"id": 2, "name": "The Liffey Lounge", "terminal": "T1", "channels": ["both"], "location": "国际出发,T2航站楼,每人限领两杯酒精饮料。贵宾室紧邻400号登机口。11:00至15:00期间进入贵宾室需视当时空位情况而定。", "tags": ["淋浴"], "verifyLevel": "lenient", "hours": "05:00-19:00", "exclusive": false, "isRestaurant": false},
+  ],
+  FCO: [
+    {"id": 1, "name": "Hello Sky Air Rooms & Lounge", "terminal": "T1", "channels": ["dp"], "location": "国际出发,独立建筑,安检前 - 休息室位于航站楼的正前方,与100米的立交桥相连接,从1、2、3号航站楼抵达的旅客,按照前往火车站的指示前往2楼,然后沿着带顶棚的走道前行,按照标识指引前往HelloSky Air Rooms & Lounge,仅需2分钟.", "verifyLevel": "strict", "hours": "06:00-22:00", "exclusive": true, "isRestaurant": false},
+    {"id": 2, "name": "Plaza Premium Lounge", "terminal": "T1", "channels": ["both"], "location": "国内出发,国际出发,T1航站楼,安检后-经过护照检查和安全检查后，贵宾室位于夹层。", "verifyLevel": "lenient", "hours": "04:30-21:30", "exclusive": false, "isRestaurant": false},
+    {"id": 3, "name": "Prima Vista Lounge", "terminal": "T1", "channels": ["both"], "location": "国内出发,国际出发,T1航站楼", "verifyLevel": "lenient", "hours": "05:15-21:45", "exclusive": false, "isRestaurant": false},
+    {"id": 4, "name": "Primeclass Lounge", "terminal": "T1", "channels": ["both"], "location": "国内出发,T1航站楼,安检后 - 在护照检查之后，休息室位于登机区 A，61 - 83 号登机口", "verifyLevel": "lenient", "hours": "05:30-22:00", "exclusive": false, "isRestaurant": false},
+    {"id": 5, "name": "Plaza Premium Lounge", "terminal": "T3", "channels": ["both"], "location": "国际出发,T3航站楼,安检后 - 通过护照检查和安检后，请按照E1-E44登机口（申根区外）指示前行。穿过免税店后，在E1-E4登机口附近搭乘电梯或自动扶梯上至一层。休息室入口位于英国航空休息室旁边。", "verifyLevel": "lenient", "hours": "05:00-22:30", "exclusive": false, "isRestaurant": false},
+    {"id": 6, "name": "Prima Vista Lounge Portus", "terminal": "T3", "channels": ["both"], "location": "国际出发,T3航站楼,安检后 - 经过护照检查和安全检查后，贵宾室位于 E51 - E61 登机口附近的中转区。仅限非申根航班。", "verifyLevel": "lenient", "hours": "05:45-22:45", "exclusive": false, "isRestaurant": false},
+  ],
+  HAN: [
+    {"id": 1, "name": "SH Premium Lounge Ha Noi", "terminal": "T1", "channels": ["both"], "location": "国内出发,T1航站楼,安检后, 在二楼进行安全检查后,搭乘自动扶梯至3楼, 该休息室位于左侧.", "tags": ["餐食"], "verifyLevel": "lenient", "exclusive": false, "isRestaurant": false},
+    {"id": 2, "name": "Vietnam Airlines Lotus Lounge", "terminal": "T1", "channels": ["dp"], "location": "国内出发,T1航站楼,安检后 - 在大堂C的二楼进行护照检查和安全检查后,直接前往大堂D然后上至三楼,休息室位于右侧.", "verifyLevel": "lenient", "exclusive": true, "isRestaurant": false},
+    {"id": 3, "name": "First Lounge", "terminal": "T1", "channels": ["dp"], "location": "国内出发,T1航站楼,空侧 - 通过安检后，乘客右转前往自动扶梯区，然后前往 3 楼。从那里左转，继续前往位于主厅中心的 Bamboo Airways 休息室。", "tags": ["餐食", "淋浴"], "verifyLevel": "lenient", "exclusive": true, "isRestaurant": false},
+    {"id": 4, "name": "SH Premium Lounge Ha Noi", "terminal": "T2", "channels": ["both"], "location": "国际出发,T2航站楼,安检后 - 在三楼进行安全检查后,右转到28号登机口,然后搭乘自动扶梯到四楼,T2航站楼东翼.", "tags": ["餐食", "淋浴"], "verifyLevel": "strict", "exclusive": false, "isRestaurant": false},
+    {"id": 5, "name": "Business Class Lounge of Vietnam Airlines (Int'l)", "terminal": "T2", "channels": ["dp"], "location": "国际出发,T2航站楼,安检后,T2航站楼，搭乘电梯至三层,贵宾室位于 22 号登机口附近.", "tags": ["餐食"], "verifyLevel": "strict", "exclusive": true, "isRestaurant": false},
+    {"id": 6, "name": "ACV Lounge", "terminal": "T2", "channels": ["dp"], "location": "国际出发,T2航站楼,位于国际航站楼安检内。经过护照检查站和安全检查站后，左转，沿着 36 号登机口附近的自动扶梯上行，到达 4 楼的贵宾室入口。", "tags": ["餐食", "淋浴"], "verifyLevel": "lenient", "exclusive": true, "isRestaurant": false},
+    {"id": 7, "name": "SH Premium Lounge Ha Noi 3", "terminal": "T2", "channels": ["both"], "location": "国际到达,国际出发,T2航站楼,内排国际机场，国际出发，西区过案件后区域，4 楼（近 36、37 号登机口）", "tags": ["餐食"], "verifyLevel": "strict", "exclusive": false, "isRestaurant": false},
+  ],
+  HEL: [
+    {"id": 1, "name": "Plaza Premium Lounge", "terminal": "T1", "channels": ["both"], "location": "国际出发,主航站楼,安检后,T2航站楼 非申根区,休息室位于夹层靠近34-40号登机口附近.", "verifyLevel": "unknown", "hours": "06:00-00:00", "exclusive": false, "isRestaurant": false},
+    {"id": 2, "name": "Aspire Lounge By Swissport (T2)", "terminal": "T2", "channels": ["both"], "location": "出发 安全检查站后方 1st 楼 13 号登机口附近 非申根旅客在通过非申根护照检查前，也可进入该贵宾室。请预留足够时间抵达登机口，因为离开候机室时需通过护照检查", "verifyLevel": "unknown", "hours": "05:00-21:00", "exclusive": false, "isRestaurant": false},
+    {"id": 3, "name": "Aspire Lounge (Gate 13)", "terminal": "T1", "channels": ["both"], "location": "国内出发,国际出发,主航站楼,安检后-休息室位于13号门附近。", "verifyLevel": "unknown", "hours": "05:00-19:0", "exclusive": false, "isRestaurant": false},
+  ],
+  JED: [
+    {"id": 1, "name": "Plaza Premium Lounge", "terminal": "T1", "channels": ["both"], "location": "国际出发,T1航站楼,安检后 - 护照检查和安全检查后,贵宾室位于 39 号登机口附近.", "verifyLevel": "lenient", "hours": "24小时营业", "exclusive": false, "isRestaurant": false},
+    {"id": 2, "name": "Wellcome Lounge International", "terminal": "T1", "channels": ["both"], "location": "国际出发,T1航站楼,安检后，休息室位于登机区旁边", "tags": ["餐食"], "verifyLevel": "lenient", "hours": "24小时营业", "exclusive": false, "isRestaurant": false},
+    {"id": 3, "name": "First Class Lounge", "terminal": "T1", "channels": ["both"], "location": "国际出发,北航站楼,护照检查柜台后左侧.", "tags": ["餐食"], "verifyLevel": "lenient", "hours": "开放时间因航班时刻表而异", "exclusive": false, "isRestaurant": false},
+    {"id": 4, "name": "Flynas Lounge", "terminal": "T1", "channels": ["both"], "location": "国内出发,国内航站楼,安检后-通过护照检查和安全检查后，使用电梯或楼梯下楼，休息室位于Al Baik附近。", "tags": ["餐食"], "verifyLevel": "lenient", "exclusive": false, "isRestaurant": false},
+  ],
+  KIX: [
+    {"id": 1, "name": "SOUTH LOUNGE", "terminal": "T1", "channels": ["dp"], "location": "国际出发,T1航站楼,安检后-位于国际线登机区域中央的3楼。请使用22号和23号登机口之间的直达电梯上至3楼。", "tags": ["餐食", "淋浴", "额外收费"], "verifyLevel": "strict", "hours": "08:00-22:00", "exclusive": true, "isRestaurant": false},
+    {"id": 2, "name": "KIX Airport Cafe Lounge NODOKA", "terminal": "T1", "channels": ["pp"], "location": "安检外区域 - 通过安全检查前，2 楼，该贵宾室位于Aeroplaza区域，前往第 2 航站楼的穿梭巴士站附近。", "verifyLevel": "strict", "exclusive": true, "isRestaurant": false},
+  ],
+  KUL: [
+    {"id": 1, "name": "Sphere Lounge", "terminal": "T1", "channels": ["both"], "location": "国际到达,国际出发,KLIA1 航站楼", "tags": ["餐食"], "verifyLevel": "strict", "hours": "08:00-23:00", "exclusive": false, "isRestaurant": false},
+    {"id": 2, "name": "Travel Club Lounge (Satellite Building)", "terminal": "T1", "channels": ["both"], "location": "国际出发,T1航站楼,在办理完出入境和海关手续后，旅客需要登上前往卫星楼的航空列车/穿梭巴士。下飞机后，请前往夹层的 C12-C18 登机口。", "tags": ["餐食"], "verifyLevel": "strict", "hours": "24小时营业", "exclusive": false, "isRestaurant": false},
+    {"id": 3, "name": "Sky Suite Airport Lounge", "terminal": "T1", "channels": ["both"], "location": "国际出发,T1航站楼", "tags": ["淋浴"], "verifyLevel": "strict", "hours": "24小时营业", "exclusive": false, "isRestaurant": false},
+    {"id": 4, "name": "Plaza Premium Lounge (International Departures, Contact Pier)", "terminal": "T1", "channels": ["both"], "location": "国际出发,T1航站楼,安检后，休息室位于一号国际离港客运大楼2楼(近G号登机门)", "tags": ["餐食", "淋浴", "额外收费"], "verifyLevel": "strict", "hours": "24小时营业", "exclusive": false, "isRestaurant": false},
+    {"id": 5, "name": "Kepler 俱乐部（安检前）", "terminal": "T1", "channels": ["both"], "location": "国内到达,国内出发,国际到达,国际出发,主航站楼", "tags": ["淋浴"], "verifyLevel": "strict", "hours": "24小时营业", "exclusive": false, "isRestaurant": false},
+    {"id": 6, "name": "Capsule Transit Sleep Lounge", "terminal": "T1", "channels": ["both"], "location": "国际出发,T1航站楼", "verifyLevel": "lenient", "hours": "24小时营业", "exclusive": false, "isRestaurant": false},
+    {"id": 7, "name": "Capsule Transit（安检外区域）", "terminal": "T2", "channels": ["both"], "location": "国内到达,T2航站楼", "verifyLevel": "strict", "exclusive": false, "isRestaurant": false},
+    {"id": 8, "name": "Capsule Transit MAX", "terminal": "T2", "channels": ["both"], "location": "出发 安全检查站前方 护照检查站前方 2M 层 休息室位于自动扶梯对面", "tags": ["餐食", "淋浴"], "verifyLevel": "strict", "exclusive": false, "isRestaurant": false},
+    {"id": 9, "name": "Capsule Transit - 吉隆坡国际机场 2 号航站楼 - 安检后", "terminal": "T2", "channels": ["both"], "location": "国内到达,T2航站楼", "tags": ["淋浴"], "verifyLevel": "strict", "hours": "24小时营业", "exclusive": false, "isRestaurant": false},
+    {"id": 10, "name": "Travel Club Lounge (T2)", "terminal": "T2", "channels": ["both"], "location": "国际出发,T2航站楼,办理完出入境和海关手续后，前往位于 2 号航站楼 2 层国际出发大厅的 L 号出发登机口。", "tags": ["餐食"], "verifyLevel": "strict", "hours": "24小时营业", "exclusive": false, "isRestaurant": false},
+    {"id": 11, "name": "Sky Suite Airport Lounge", "terminal": "T2", "channels": ["both"], "location": "国内出发,国际出发,T2航站楼", "tags": ["餐食"], "verifyLevel": "lenient", "hours": "24小时营业", "exclusive": false, "isRestaurant": false},
+    {"id": 12, "name": "Travel Club Lounge (KLIA 2)", "terminal": "T2", "channels": ["both"], "location": "国际出发,T2航站楼,办理完入境和清关手续后，前往位于3层的p登机口，2号航站楼的国际登机口。", "tags": ["餐食"], "verifyLevel": "lenient", "hours": "24小时营业", "exclusive": false, "isRestaurant": false},
+  ],
+  LIN: [
+    {"id": 1, "name": "Leonardo Exclusive Lounge", "terminal": "T1", "channels": ["both"], "location": "国际出发,国内出发,主航站楼,安检后,该休息室位于18号登机口前,可通过楼梯或者搭乘电梯抵达.", "tags": ["餐食"], "verifyLevel": "lenient", "exclusive": false, "isRestaurant": false},
+    {"id": 2, "name": "Piranesi Classic Lounge", "terminal": "T1", "channels": ["both"], "location": "国内出发,国际出发,主航站楼,安检前 - 休息室靠近Alitalia意大利航空公司办理登机手续区", "verifyLevel": "unknown", "exclusive": false, "isRestaurant": false},
+  ],
+  MAD: [
+    {"id": 1, "name": "Sala VIP Cibeles", "terminal": "T1", "channels": ["both"], "location": "国际出发,T1航站楼,护照检查后前往二楼,右侧B26和B29登机区之间(遵循'Sala VIP'的标示前往).", "verifyLevel": "lenient", "hours": "24小时营业", "timeBefore": "3h", "exclusive": false, "isRestaurant": false},
+    {"id": 2, "name": "SaLa Puerta de Alcala Lounge (T2)", "terminal": "T2", "channels": ["both"], "location": "国际出发,T2航站楼,D62登机区附近,此贵宾室只开放予于第2航站和第3航站, C和D区离境乘客.", "verifyLevel": "lenient", "hours": "24小时营业", "timeBefore": "3h", "exclusive": false, "isRestaurant": false},
+    {"id": 3, "name": "SALA Puerta del Sol Lounge (T3)", "terminal": "T3", "channels": ["both"], "location": "国际出发,T3航站楼,安检后，前往登机区，走E69登机口旁边的楼梯，上到1层。", "verifyLevel": "lenient", "hours": "04:30-21:30", "exclusive": false, "isRestaurant": false},
+    {"id": 4, "name": "Aerotel Madrid - The Hub", "terminal": "T4", "channels": ["dp"], "location": "国际到达,T4航站楼,安检前 - 在 4 号航站楼到达大厅安检前，使用自动扶梯或电梯下至 -1 层。位于地铁和租车服务之间。", "tags": ["餐食"], "verifyLevel": "lenient", "exclusive": true, "isRestaurant": false},
+    {"id": 5, "name": "Sala VIP Retiro", "terminal": "T4", "channels": ["dp"], "location": "申根区，国内出发,国际出发,T4航站楼,空侧 - 护照检查后，休息室位于 4 号航站楼快速通道区旁边。", "tags": ["餐食", "淋浴"], "verifyLevel": "lenient", "hours": "05:00-00:00", "timeBefore": "3h", "exclusive": true, "isRestaurant": false},
+    {"id": 6, "name": "Plaza Mayor Lounge", "terminal": "T4", "channels": ["dp"], "location": "申根区航班国际出发,T4航站楼,一楼,'AENA' 展览室附近.", "verifyLevel": "lenient", "hours": "05:00-22:00", "timeBefore": "3h", "exclusive": true, "isRestaurant": false},
+    {"id": 7, "name": "Neptuno Lounge", "terminal": "T4", "channels": ["both"], "location": "出发 安全检查站后方 护照检查站后方 2楼 黄区 仅限非申根航班", "verifyLevel": "lenient", "timeBefore": "3h", "exclusive": false, "isRestaurant": false},
+    {"id": 8, "name": "GettSleep Madrid", "terminal": "T4", "channels": ["both"], "location": "国内出发,国际出发,T4S航站楼,安检后- 安检后，GettSleep位于一楼。", "tags": ["淋浴"], "verifyLevel": "unknown", "hours": "24小时营业", "exclusive": false, "isRestaurant": false},
+  ],
+  MEL: [
+    {"id": 1, "name": "Marhaba Lounge", "terminal": "T2", "channels": ["both"], "location": "国际出发,T2航站楼,安检后 - 通过护照检查和安检后，贵宾室位于 9 号和 11 号登机口，有电梯和自动扶梯直接通往 3 楼贵宾室入口。", "verifyLevel": "lenient", "hours": "05:00-00:00", "exclusive": false, "isRestaurant": false},
+    {"id": 2, "name": "The House by Aspire Lounge", "terminal": "T2", "channels": ["both"], "location": "国际出发,T2航站楼,安检后 - 通过海关后，请按照贵宾室指示牌前往 1 楼。从那里，按照指示牌指示前往 Aspire 贵宾室。", "verifyLevel": "lenient", "hours": "07:00-00:00", "exclusive": false, "isRestaurant": false},
+    {"id": 3, "name": "Plaza Premium Lounge", "terminal": "T2", "channels": ["both"], "location": "国际出发,T2航站楼,安检后，国际出发，2号航站楼,9号门附近", "verifyLevel": "lenient", "hours": "08:30-23:30", "exclusive": false, "isRestaurant": false},
+  ],
+  MLA: [
+    {"id": 1, "name": "La Valette Club", "terminal": "T1", "channels": ["both"], "location": "国际出发,国内出发,主航站楼,休息室位于Nuance免税店的出口处", "tags": ["餐食"], "verifyLevel": "lenient", "hours": "24小时营业", "exclusive": false, "isRestaurant": false},
+    {"id": 2, "name": "VIP Lounge (Arrivals)", "terminal": "T1", "channels": ["both"], "location": "国际到达,国内到达,主航站楼,到达厅内,行李提取处旁边.", "verifyLevel": "lenient", "hours": "24小时营业", "exclusive": false, "isRestaurant": false},
+  ],
+  MRU: [
+    {"id": 1, "name": "Amedee Maingard Lounge", "terminal": "T1", "channels": ["both"], "location": "国际出发,主航站楼,安检后 - 出境检查后经过MDFP免税店,右转直走至尽头.", "tags": ["餐食", "淋浴"], "verifyLevel": "unknown", "exclusive": false, "isRestaurant": false},
+    {"id": 2, "name": "Salon Nenuphar", "terminal": "T1", "channels": ["pp"], "location": "空侧——安检后左转，19号登机口对面。仅限国际航班。", "verifyLevel": "strict", "exclusive": true, "isRestaurant": false},
+  ],
+  OSL: [
+    {"id": 1, "name": "OSL Lounge", "terminal": "T1", "channels": ["dp"], "location": "国际出发,主航站楼,安检后，休息室位于E2登机口正对面", "verifyLevel": "lenient", "hours": "05:00-19:00", "exclusive": true, "isRestaurant": false},
+    {"id": 2, "name": "OSL Lounge Innland", "terminal": "T1", "channels": ["dp"], "location": "国内出发,A航站楼,安检后-休息室位于二层，A15登机口附近。", "verifyLevel": "lenient", "hours": "07:00-20:00", "exclusive": true, "isRestaurant": false},
+  ],
+  PRG: [
+    {"id": 1, "name": "MasterCard Lounge (T1)", "terminal": "T1", "channels": ["both"], "location": "国际出发,T1航站楼,安检后 - 护照检查和安检后，沿指示牌前往机场贵宾室，朝 B 登机口方向走。贵宾室位于一楼左侧。", "tags": ["淋浴"], "verifyLevel": "lenient", "hours": "05:30-22:00", "exclusive": false, "isRestaurant": false},
+    {"id": 2, "name": "Erste Premier Lounge", "terminal": "T2", "channels": ["both"], "location": "国际出发,T2航站楼,安检后 - 护照检查和安检后，沿指示牌前往机场贵宾室。贵宾室位于三楼右侧。", "tags": ["餐食", "淋浴"], "verifyLevel": "lenient", "hours": "05:00-22:00", "exclusive": false, "isRestaurant": false},
+  ],
+  YVR: [
+    {"id": 1, "name": "Plaza Premium Lounge (Domestic)", "terminal": "T1", "channels": ["both"], "location": "国内出发,国内航站楼,安检后 - 经过护照检查和安全检查后，前往 3 层，贵宾室位于 A 和 B 登机口之间。", "verifyLevel": "lenient", "hours": "05:00-20:30", "exclusive": false, "isRestaurant": false},
+    {"id": 2, "name": "Plaza Premium Lounge (Domestic Pier C)", "terminal": "T1", "channels": ["both"], "location": "国内出发,国内航站楼,休息室位于安检后靠近C29登机口.", "verifyLevel": "lenient", "hours": "06:45-20:30", "exclusive": false, "isRestaurant": false},
+    {"id": 3, "name": "Plaza Premium International Lounge", "terminal": "T1", "channels": ["both"], "location": "国际出发,国际航站楼,安检后 - 通过护照检查和安全检查后，靠近美食广场和免税购物区，休息室位于D67和D68门之间。", "verifyLevel": "lenient", "exclusive": false, "isRestaurant": false},
+    {"id": 4, "name": "Plaza Premium Lounge (USA Departures)", "terminal": "T1", "channels": ["both"], "location": "国际出发,国际航站楼,出境检查后,穿过E87号登机区至贵宾室.", "verifyLevel": "lenient", "hours": "04:45-21:00", "exclusive": false, "isRestaurant": false},
+    {"id": 5, "name": "Skyteam Vip Lounge", "terminal": "T1", "channels": ["both"], "location": "国际出发,国际航站楼,安检后 - 安检后，贵宾室位于D厅西翼。", "verifyLevel": "strict", "hours": "24小时营业", "exclusive": false, "isRestaurant": false},
+  ],
+  IAD: [],
+  STN: [],
+};
+
+const STORAGE_KEY = 'loungeData_';
+
+let currentAirport = 'LHR';
+let lounges = [];
+let selectedChannels = new Set(['dp', 'pp']);
+let activeTerminal = 'all';
+
+// ===== 初始化机场选择器 =====
+function initAirportSelector() {
+  try {
+    const custom = JSON.parse(localStorage.getItem('customAirports') || '{}');
+    Object.entries(custom).forEach(([code, name]) => {
+      if (!AIRPORTS[code]) AIRPORTS[code] = { code: code, name: name, country: '', flag: '✈️' };
+    });
+  } catch(e) {}
+
+  const el = document.getElementById('airportSelector');
+  let html = '<div class="apt-search-wrap"><span class="apt-search-icon">🔍</span><input type="text" id="aptSearchInput" placeholder="搜索机场代码(如LHR/KUL)..." oninput="filterDisplayAirports()" value=""></div>';
+  html += Object.values(AIRPORTS).map(a => {
+    const shortName = a.name.length > 6 ? a.name.substring(0, 5) + '…' : a.name;
+    return `<button class="apt-btn${a.code===currentAirport?' active':''}" data-code="${a.code}" data-name="${a.name}" onclick="switchAirport('${a.code}')">${a.flag} ${a.code} ${shortName}<span class="apt-count" id="cnt_${a.code}"></span></button>`;
+  }).join('');
+  el.innerHTML = html;
+
+  refreshDisplayCounts();
+}
+
+function refreshDisplayCounts() {
+  document.querySelectorAll('.apt-btn[data-code]').forEach(btn => {
+    const code = btn.dataset.code;
+    if (!code) return;
+    try {
+      // 优先从localStorage取，否则用预置数据
+      let count = 0;
+      const raw = localStorage.getItem(STORAGE_KEY + code);
+      if (raw) { const d = JSON.parse(raw); if (Array.isArray(d)) count = d.length; }
+      else if (PRESET_DATA[code] && Array.isArray(PRESET_DATA[code])) count = PRESET_DATA[code].length;
+
+      const badge = btn.querySelector('.apt-count');
+      if (badge) { badge.textContent = count > 0 ? count : ''; badge.style.display = count > 0 ? 'inline' : 'none'; }
+    } catch(e) {}
+  });
+}
+
+function filterDisplayAirports() {
+  const query = (document.getElementById('aptSearchInput')?.value || '').trim().toLowerCase();
+  document.querySelectorAll('.apt-btn[data-code]').forEach(btn => {
+    if (!query) { btn.style.display = ''; return; }
+    const code = (btn.dataset.code || '').toLowerCase();
+    const name = (btn.dataset.name || '').toLowerCase();
+    btn.style.display = code.includes(query) || name.includes(query) ? '' : 'none';
+  });
+}
+
+// ===== 加载数据 =====
+function loadAirportData(code) {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY + code);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        lounges = parsed;
+        lounges.forEach((l, idx) => l.id = idx + 1);
+        return;
+      }
+    }
+  } catch(e) {}
+  if (PRESET_DATA[code] && PRESET_DATA[code].length > 0) {
+    lounges = PRESET_DATA[code].map((l, idx) => ({ ...l, id: idx + 1 }));
+    try { localStorage.setItem(STORAGE_KEY + code, JSON.stringify(lounges)); } catch(e) {}
+  } else {
+    lounges = [];
+  }
+}
+
+// ===== 切换机场 =====
+function switchAirport(code) {
+  if (code === currentAirport) return;
+  currentAirport = code;
+
+  document.querySelectorAll('.apt-btn').forEach(b => b.classList.toggle('active', b.dataset.code === code));
+
+  selectedChannels = new Set(['dp', 'pp']);
+  activeTerminal = 'all';
+  document.querySelectorAll('.channel-btn[data-ch="dp"]').className = 'channel-btn active-dp';
+  document.querySelectorAll('.channel-btn[data-ch="pp"]').className = 'channel-btn active-pp';
+
+  loadAirportData(code);
+
+  const apt = AIRPORTS[code] || { name: code, flag: '', code: code };
+  document.querySelector('.header h1').textContent = `✈️ ${apt.flag} ${apt.name}`;
+
+  // 更新底部提示
+  const hintEl = document.getElementById('bottomBarHint');
+  if (hintEl) hintEl.textContent = `${apt.name} 共${lounges.length}个贵宾厅/餐厅`;
+
+  refreshDisplayCounts();
+  render();
+  // 滚回顶部
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ===== 渠道筛选 =====
+function toggleChannel(ch) {
+  const btn = document.querySelector(`.channel-btn[data-ch="${ch}"]`);
+  if (selectedChannels.has(ch)) {
+    selectedChannels.delete(ch);
+    btn.className = 'channel-btn inactive';
+  } else {
+    selectedChannels.add(ch);
+    btn.className = ch === 'dp' ? 'channel-btn active-dp' : 'channel-btn active-pp';
+  }
+  render();
+}
+
+// ===== 渲染航站楼标签 =====
+function renderTermTabs() {
+  const el = document.getElementById('termTabs');
+  const terminals = [...new Set(lounges.map(l => l.terminal))].sort();
+
+  let html = `<button class="tab-btn active" onclick="filterTerminal('all')">全部<span class="tab-count" id="tabAll">${lounges.length}</span></button>`;
+  terminals.forEach(t => {
+    const cnt = lounges.filter(l => l.terminal === t).length;
+    html += `<button class="tab-btn" onclick="filterTerminal('${t}')">${t}<span class="tab-count">${cnt}</span></button>`;
+  });
+  el.innerHTML = html;
+}
+
+function filterTerminal(term) {
+  activeTerminal = term;
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    b.classList.toggle('active', b.textContent.includes(term === 'all' ? '全部' : term));
+  });
+  render();
+}
+
+// ===== 验证级别 =====
+function getVerifyDot(level) {
+  const map = { lenient: 'ver-lenient', unknown: 'ver-unknown', strict: 'ver-strict' };
+  return `<span class="ver-dot ${map[level]||''}" title="${level==='lenient'?'宽松':level==='strict'?'严格':'不确定'}验证"></span>`;
+}
+function getVerifyBadge(level) {
+  if (!level) return '';
+  const map = { lenient: '🔓', unknown: '❓', strict: '🔒' };
+  const colors = { lenient: '#43a047', unknown: '#fbc02d', strict: '#e53935' };
+  return `<span class="badge badge-ver" style="background:${colors[level]}15;color:${colors[level]}">${map[level]}</span>`;
+}
+
+// ===== 主渲染函数 =====
+function render() {
+  // 过滤
+  let filtered = lounges.filter(l => {
+    const hasDp = l.channels.includes('dp') || l.channels.includes('both');
+    const hasPp = l.channels.includes('pp') || l.channels.includes('both');
+    const chMatch = (selectedChannels.has('dp') && hasDp) || (selectedChannels.has('pp') && hasPp);
+    const termMatch = activeTerminal === 'all' || l.terminal === activeTerminal;
+    return chMatch && termMatch;
+  });
+
+  // 统计
+  const dpList = filtered.filter(l => l.channels.includes('dp') || l.channels.includes('both'));
+  const ppList = filtered.filter(l => l.channels.includes('pp') || l.channels.includes('both'));
+  const overlapList = filtered.filter(l => l.channels.includes('both'));
+  const exclList = filtered.filter(l => l.exclusive);
+
+  document.getElementById('dpCount').textContent = dpList.length || '-';
+  document.getElementById('ppCount').textContent = ppList.length || '-';
+  document.getElementById('overlapCount').textContent = overlapList.length || '-';
+  document.getElementById('exclusiveCount').textContent = exclList.length || '-';
+
+  // 更新标签计数
+  ['all', ...new Set(filtered.map(l => l.terminal))].forEach(t => {
+    const el = t === 'all' ? document.getElementById('tabAll') :
+      Array.from(document.querySelectorAll('.tab-btn')).find(b => b.textContent.trim().startsWith(t));
+    if (el) {
+      const cnt = t === 'all' ? filtered.length : filtered.filter(l => l.terminal === t).length;
+      const sp = el.querySelector('.tab-count');
+      if (sp) sp.textContent = cnt;
+    }
+  });
+
+  // AI推荐
+  const aiTip = document.getElementById('aiTip');
+  if (filtered.length === 0) {
+    aiTip.classList.remove('show');
+    showEmpty();
+    return;
+  }
+
+  // 有PP独占时显示提示
+  const hasExclusive = exclList.some(l => !l.isRestaurant);
+  if (hasExclusive && !selectedChannels.has('pp')) {
+    aiTip.classList.add('show');
+    aiTip.innerHTML = '💡 <strong>提示：</strong>开启PP渠道可查看 <strong>' + exclList.find(l=>!l.isRestaurant)?.name + '</strong> 等 ' + exclList.filter(l=>!l.isRestaurant).length + ' 个PP独占休息室';
+  } else if (selectedChannels.size === 1 && lounges.some(l =>
+    (selectedChannels.has('pp') && !l.channels.includes('pp') && l.channels.includes('dp')) ||
+    (selectedChannels.has('dp') && !l.channels.includes('dp') && l.channels.includes('pp'))
+  )) {
+    aiTip.classList.add('show');
+    aiTip.innerHTML = '💡 <strong>提示：</strong>同时勾选两个渠道可以看到<strong>完整对比</strong>';
+  } else {
+    aiTip.classList.remove('show');
+  }
+
+  // 卡片列表
+  const listEl = document.getElementById('loungeList');
+  listEl.innerHTML = filtered.map(l => renderCard(l)).join('');
+}
+
+function renderCard(l) {
+  const isDp = l.channels.includes('dp') || l.channels.includes('both');
+  const isPp = l.channels.includes('pp') || l.channels.includes('both');
+
+  // 只显示渠道badge + 餐厅/独占标记
+  let badges = '';
+  if (l.channels[0] === 'both') badges += '<span class="badge badge-dp">龙</span><span class="badge badge-pp">PP</span>';
+  else if (isPp) badges += '<span class="badge badge-pp">PP</span>';
+  else if (isDp) badges += '<span class="badge badge-dp">龙</span>';
+  if (l.isRestaurant) badges += '<span class="badge badge-rest">餐厅</span>';
+
+  // 只保留营业时间和提前规则，去掉设施标签
+  const tbMap = { '2h':'⏱2h','3h':'⏱3h','4h':'⏱4h','any':'随时','unknown':'?' };
+  let tagHtml = '';
+  if (l.hours) tagHtml += `<span class="tag tag-hours">🕐${l.hours}</span>`;
+  if (l.timeBefore) tagHtml += `<span class="tag tag-before">✈️${tbMap[l.timeBefore]||l.timeBefore}</span>`;
+
+  // 重要信息（醒目提示条）
+  const noteHtml = l.importantNote ? `<div class="lounge-important">⚠️ ${l.importantNote}</div>` : '';
+
+  let borderClass = 'border-both';
+  if (l.channels[0] === 'pp') borderClass = 'border-pp';
+  else if (l.channels[0] === 'dp') borderClass = 'border-dp';
+
+  return `
+  <div class="lounge-card ${borderClass}">
+    <div class="lounge-header">
+      <div>
+        <div class="lounge-name">${l.name}</div>
+        <div class="lounge-terminal">📍 ${l.terminal || '?'} ${l.location ? '· '+l.location : ''}</div>
+      </div>
+      <div class="lounge-badges">${badges}</div>
+    </div>${tagHtml ? '<div class="lounge-tags">'+tagHtml+'</div>' : ''}${noteHtml}
+  </div>`;
+}
+
+function showEmpty() {
+  const apt = AIRPORTS[currentAirport];
+  document.getElementById('loungeList').innerHTML = `
+    <div class="empty-state">
+      <div class="emoji">🛫</div>
+      <p>${apt ? apt.name : currentAirport} 暂无匹配数据</p>
+      <small>试试切换其他渠道或航站楼</small>
+    </div>`;
+}
+
+function scrollToTop() {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ===== 初始化 =====
+initAirportSelector();
+loadAirportData(currentAirport);
+render();
+renderTermTabs();
+</script>
+</body>
+</html>
