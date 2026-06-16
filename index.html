@@ -77,6 +77,40 @@
     color: #333; min-width: 0;
   }
   .search-box input::placeholder { color: #bbb; }
+  .search-box .search-btn {
+    padding: 7px 14px; border: none; border-radius: 8px;
+    background: var(--primary); color: white; font-size: 13px;
+    font-weight: 600; cursor: pointer; flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
+    transition: opacity 0.15s;
+  }
+  .search-box .search-btn:active { opacity: 0.85; transform: scale(0.96); }
+
+  /* 搜索下拉建议列表 */
+  .search-dropdown {
+    position: absolute; top: calc(100% + 4px); left: 12px; right: 12px;
+    background: white; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.18);
+    max-height: 220px; overflow-y: auto; z-index: 100;
+    display: none;
+  }
+  .search-dropdown.show { display: block; animation: dropFadeIn 0.15s ease; }
+  @keyframes dropFadeIn { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:translateY(0)} }
+  .search-dropdown-item {
+    display: flex; align-items: center; gap: 8px; padding: 10px 14px;
+    cursor: pointer; border-bottom: 1px solid #f0f0f0; transition: background 0.1s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .search-dropdown-item:last-child { border-bottom: none; }
+  .search-dropdown-item:active, .search-dropdown-item:hover { background: #f5f7ff; }
+  .search-dropdown-item .dd-flag { font-size: 18px; flex-shrink: 0; }
+  .search-dropdown-item .dd-info { flex: 1; min-width: 0; }
+  .search-dropdown-item .dd-name { font-size: 13.5px; font-weight: 600; color: #333; }
+  .search-dropdown-item .dd-code { font-size: 11px; color: #999; margin-top: 1px; }
+  .search-dropdown-item .dd-count { font-size: 11.5px; color: white; background: var(--primary);
+    padding: 2px 7px; border-radius: 10px; flex-shrink: 0; font-weight: 600; }
+  .search-empty {
+    text-align: center; padding: 16px; color: #999; font-size: 13px;
+  }
 
   /* 热门机场快捷标签 */
   .hot-airports {
@@ -303,9 +337,13 @@
   <!-- 搜索框 -->
   <div class="search-box" id="searchBox">
     <span class="search-icon">🔍</span>
-    <input type="text" id="aptSearchInput" placeholder="搜索机场：如 LHR / 希思罗 / 吉隆坡..." autocomplete="off"
-           oninput="handleSearchInput(this.value)" value="">
+    <input type="text" id="aptSearchInput" placeholder="输入机场代码或名称，如 LHR / 希思罗..." autocomplete="off"
+           oninput="handleSearchInput(this.value)" onkeydown="handleSearchKeydown(event)" value="">
+    <button class="search-btn" onclick="doSearch()">查询</button>
   </div>
+
+  <!-- 搜索下拉建议列表 -->
+  <div class="search-dropdown" id="searchDropdown" style="display:none"></div>
 
   <!-- 热门机场快捷标签 -->
   <div class="hot-airports" id="hotAirports"></div>
@@ -609,21 +647,139 @@ function initAirportSelector() {
   renderCurrentAptBar();
 }
 
-// 搜索框输入处理
+// ===== 搜索相关 =====
+let searchTimer = null;
+
+// 搜索框输入 — 显示匹配的下拉列表
 function handleSearchInput(val) {
-  const q = val.trim().toLowerCase();
-  // 高亮匹配的热门按钮
+  const q = val.trim();
+  const dropdown = document.getElementById('searchDropdown');
+
+  // 高亮/灰化热门标签
   document.querySelectorAll('.hot-btn').forEach(btn => {
-    btn.style.opacity = (!q || btn.textContent.toLowerCase().includes(q)) ? '1' : '0.35';
+    btn.style.opacity = (!q || btn.textContent.toLowerCase().includes(q.toLowerCase())) ? '1' : '0.35';
   });
-  // 如果精确匹配某个机场代码，自动切换
-  if (q.length >= 2 && q.length <= 4) {
-    const matchCode = Object.keys(AIRPORTS).find(c => c.toLowerCase() === q);
-    if (matchCode && matchCode !== currentAirport) {
-      switchAirport(matchCode);
+
+  // 清除之前的定时器
+  if (searchTimer) clearTimeout(searchTimer);
+
+  if (!q) {
+    hideDropdown();
+    return;
+  }
+
+  // 防抖：200ms后显示建议
+  searchTimer = setTimeout(() => showSearchSuggestions(q), 150);
+}
+
+// 回车键触发查询
+function handleSearchKeydown(e) {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    doSearch();
+  } else if (e.key === 'Escape') {
+    hideDropdown();
+  }
+}
+
+// 点击"查询"按钮
+function doSearch() {
+  const q = document.getElementById('aptSearchInput').value.trim().toLowerCase();
+  if (!q) return;
+
+  // 1. 先精确匹配代码
+  let matchCode = Object.keys(AIRPORTS).find(c => c.toLowerCase() === q);
+  // 2. 再模糊匹配中文名
+  if (!matchCode) {
+    matchCode = Object.entries(AIRPORTS).find(([c, a]) =>
+      a.name.toLowerCase().includes(q)
+    )?.[0];
+  }
+  // 3. 再前缀匹配代码
+  if (!matchCode) {
+    matchCode = Object.keys(AIRPORTS).find(c => c.toLowerCase().startsWith(q));
+  }
+
+  if (matchCode) {
+    hideDropdown();
+    switchAirport(matchCode);
+  } else {
+    // 无匹配时提示
+    const dropdown = document.getElementById('searchDropdown');
+    if (dropdown) {
+      dropdown.innerHTML = '<div class="search-empty">未找到匹配的机场<br><small>尝试输入代码（如 LHR）或城市名</small></div>';
+      dropdown.classList.add('show');
     }
   }
 }
+
+// 显示搜索下拉建议
+function showSearchSuggestions(q) {
+  const ql = q.toLowerCase();
+  const dropdown = document.getElementById('searchDropdown');
+  if (!dropdown) return;
+
+  // 匹配逻辑：代码精确/前缀匹配 或 中文名包含
+  const matches = Object.entries(AIRPORTS)
+    .map(([code, apt]) => ({
+      code, name: apt.name, flag: apt.flag,
+      count: (PRESET_DATA[code] || []).length,
+      score: code.toLowerCase() === ql ? 100 :
+             code.toLowerCase().startsWith(ql) ? 80 :
+             apt.name.toLowerCase().includes(ql) ? 60 :
+             ql.length >= 2 && code.toLowerCase().includes(ql) ? 40 : 0
+    }))
+    .filter(m => m.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 10);
+
+  if (matches.length === 0) {
+    dropdown.innerHTML = '<div class="search-empty">未找到匹配的机场</div>';
+  } else {
+    dropdown.innerHTML = matches.map(m => `
+      <div class="search-dropdown-item" onclick="selectSearchResult('${m.code}')">
+        <span class="dd-flag">${m.flag}</span>
+        <div class="dd-info">
+          <div class="dd-name">${highlightMatch(m.name, q)}</div>
+          <div class="dd-code">${m.code}${m.count ? ' · ' + m.count + '个贵宾厅' : ''}</div>
+        </div>
+        ${m.count ? `<span class="dd-count">${m.count}</span>` : ''}
+      </div>
+    `).join('');
+  }
+  dropdown.classList.add('show');
+}
+
+// 高亮匹配文字
+function highlightMatch(text, query) {
+  if (!query) return text;
+  const idx = text.toLowerCase().indexOf(query.toLowerCase());
+  if (idx < 0) return text;
+  return text.slice(0, idx) + '<mark style="background:#fff3cd;color:#856404;padding:0 1px;border-radius:2px;font-weight:600">' +
+         text.slice(idx, idx + query.length) + '</mark>' + text.slice(idx + query.length);
+}
+
+// 点击下拉选项
+function selectSearchResult(code) {
+  hideDropdown();
+  document.getElementById('aptSearchInput').value = '';
+  switchAirport(code);
+}
+
+// 隐藏下拉列表
+function hideDropdown() {
+  const d = document.getElementById('searchDropdown');
+  if (d) { d.classList.remove('show'); setTimeout(() => { if (!d.classList.contains('show')) d.innerHTML = ''; }, 200); }
+}
+
+// 点击页面其他区域关闭下拉
+document.addEventListener('click', function(e) {
+  const box = document.getElementById('searchBox');
+  const drop = document.getElementById('searchDropdown');
+  if (box && drop && !box.contains(e.target) && !drop.contains(e.target)) {
+    hideDropdown();
+  }
+});
 
 // 当前机场信息栏
 function renderCurrentAptBar() {
