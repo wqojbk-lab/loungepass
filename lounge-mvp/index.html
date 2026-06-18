@@ -281,6 +281,33 @@
   /* 重要信息提示条 */
   .lounge-important { font-size: 12px; color: #e65100; background: #fff8e1; padding: 7px 10px; border-radius: 8px; margin-top: 6px; border-left: 3px solid #e65100; line-height: 1.4; }
 
+  /* 大洲分组 */
+  .continent-sections { padding: 10px 12px 0; max-width: 480px; margin: 0 auto; }
+  .continent-group { margin-bottom: 12px; background: white; border-radius: var(--radius); overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+  .continent-header {
+    display: flex; align-items: center; gap: 8px; padding: 11px 14px;
+    background: #f8f9fb; cursor: pointer; user-select: none;
+    border-bottom: 1px solid #eee; font-size: 14px; font-weight: 700;
+    color: var(--primary); -webkit-tap-highlight-color: transparent;
+  }
+  .continent-header .c-icon { font-size: 20px; }
+  .continent-header .c-arrow { margin-left: auto; font-size: 11px; color: #999; transition: transform 0.2s; }
+  .continent-group.open .continent-header .c-arrow { transform: rotate(180deg); }
+  .continent-header .c-count { font-size: 11px; color: #999; font-weight: 400; margin-left: 6px; }
+  .continent-airports {
+    display: none; padding: 8px 10px; flex-wrap: wrap; gap: 6px;
+  }
+  .continent-group.open .continent-airports { display: flex; }
+  .c-apt-btn {
+    padding: 6px 12px; border-radius: 18px; border: 1.5px solid #e0e0e0;
+    background: #fafafa; cursor: pointer; font-size: 12px; font-weight: 600;
+    color: #555; transition: all 0.15s; white-space: nowrap;
+    -webkit-tap-highlight-color: transparent; display: inline-flex; align-items: center; gap: 4px;
+  }
+  .c-apt-btn:active { transform: scale(0.95); }
+  .c-apt-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+  .c-apt-btn .c-apt-count { font-size: 10px; opacity: 0.7; font-weight: 400; }
+
   /* ===== 航站楼分组标题 ===== */
   .terminal-section-header {
     font-size: 13px; font-weight: 700; color: var(--primary-light);
@@ -358,10 +385,10 @@
 
   <!-- 搜索下拉建议列表 -->
   <div class="search-dropdown" id="searchDropdown" style="display:none"></div>
-
-  <!-- 热门机场快捷标签 -->
-  <div class="hot-airports" id="hotAirports"></div>
 </div>
+
+<!-- 大洲分组浏览 -->
+<div class="continent-sections" id="continentSections"></div>
 
 <div class="container">
 
@@ -411,37 +438,37 @@
 <script>
 // ===== 机场元数据（全量硬编码） =====
 const AIRPORTS = {
-  LHR: { code: 'LHR', name: '伦敦希思罗', country: '英国', flag: '🇬🇧' },
-  HKG: { code: 'HKG', name: '香港国际机场', country: '中国香港', flag: '🇭🇰' },
-  CPH: { code: 'CPH', name: '哥本哈根凯斯楚普', country: '丹麦', flag: '🇩🇰' },
-  KUL: { code: 'KUL', name: '吉隆坡国际机场', country: '马来西亚', flag: '🇲🇾' },
-  MAD: { code: 'MAD', name: '马德里-巴拉哈斯机场', country: '西班牙', flag: '🇪🇸' },
-  HAN: { code: 'HAN', name: '河内内排国际机场', country: '越南', flag: '🇻🇳' },
-  CAI: { code: 'CAI', name: '开罗国际机场', country: '埃及', flag: '🇪🇬' },
-  BCN: { code: 'BCN', name: '巴塞罗那-埃尔普拉特机场', country: '西班牙', flag: '🇪🇸' },
-  FCO: { code: 'FCO', name: '罗马-菲乌米奇诺机场', country: '意大利', flag: '🇮🇹' },
-  DEL: { code: 'DEL', name: '新德里英迪拉·甘地国际机场', country: '印度', flag: '🇮🇳' },
-  YVR: { code: 'YVR', name: '温哥华国际机场', country: '加拿大', flag: '🇨🇦' },
-  JED: { code: 'JED', name: '吉达-阿卜杜勒·阿齐兹国王国际机场', country: '沙特阿拉伯', flag: '🇸🇦' },
-  BUD: { code: 'BUD', name: '布达佩斯李斯特·费伦茨国际机场', country: '匈牙利', flag: '🇺🇶' },
-  CMB: { code: 'CMB', name: '科伦坡-班达拉奈克国际机场', country: '斯里兰卡', flag: '🇱🇰' },
-  HEL: { code: 'HEL', name: '赫尔辛基万塔机场', country: '芬兰', flag: '🇫🇮' },
-  MEL: { code: 'MEL', name: '墨尔本机场', country: '澳大利亚', flag: '🇦🇺' },
-  LIN: { code: 'LIN', name: '米兰利纳特机场', country: '意大利', flag: '🇮🇹' },
-  MRU: { code: 'MRU', name: '毛里求斯-西沃萨古尔·拉姆古兰爵士国际机场', country: '毛里求斯', flag: '🇲🇺' },
-  AMS: { code: 'AMS', name: '阿姆斯特丹史基浦机场', country: '荷兰', flag: '🇳🇱' },
-  MLA: { code: 'MLA', name: '马耳他国际机场', country: '马耳他', flag: '🇲🇹' },
-  PRG: { code: 'PRG', name: '布拉格-瓦茨拉夫·哈维尔国际机场', country: '捷克', flag: '🇨🇿' },
-  BER: { code: 'BER', name: '勃兰登堡国际机场', country: '德国', flag: '🇩🇪' },
-  KIX: { code: 'KIX', name: '大阪关西国际机场', country: '日本', flag: '🇯🇵' },
-  BRU: { code: 'BRU', name: '布鲁塞尔机场', country: '比利时', flag: '🇧🇪' },
-  DUB: { code: 'DUB', name: '都柏林机场', country: '爱尔兰', flag: '🇮🇪' },
-  DLU: { code: 'DLU', name: '大理凤仪机场', country: '中国', flag: '🇨🇳' },
-  BKI: { code: 'BKI', name: '亚庇国际机场', country: '马来西亚', flag: '🇲🇾' },
-  OSL: { code: 'OSL', name: '奥斯陆加勒穆恩机场', country: '挪威', flag: '🇳🇴' },
-  ADD: { code: 'ADD', name: '亚的斯亚贝巴机场', country: '埃塞俄比亚', flag: '🇪🇹' },
-  IAD: { code: 'IAD', name: '华盛顿杜勒斯国际机场', country: '美国', flag: '🇺🇸' },
-  STN: { code: 'STN', name: '伦敦斯坦斯特德机场', country: '英国', flag: '🇬🇧' },
+  LHR: { code: 'LHR', name: '伦敦希思罗', country: '英国', flag: '🇬🇧', continent: 'europe' },
+  HKG: { code: 'HKG', name: '香港国际机场', country: '中国香港', flag: '🇭🇰', continent: 'asia' },
+  CPH: { code: 'CPH', name: '哥本哈根凯斯楚普', country: '丹麦', flag: '🇩🇰', continent: 'europe' },
+  KUL: { code: 'KUL', name: '吉隆坡国际机场', country: '马来西亚', flag: '🇲🇾', continent: 'asia' },
+  MAD: { code: 'MAD', name: '马德里-巴拉哈斯机场', country: '西班牙', flag: '🇪🇸', continent: 'europe' },
+  HAN: { code: 'HAN', name: '河内内排国际机场', country: '越南', flag: '🇻🇳', continent: 'asia' },
+  CAI: { code: 'CAI', name: '开罗国际机场', country: '埃及', flag: '🇪🇬', continent: 'africa' },
+  BCN: { code: 'BCN', name: '巴塞罗那-埃尔普拉特机场', country: '西班牙', flag: '🇪🇸', continent: 'europe' },
+  FCO: { code: 'FCO', name: '罗马-菲乌米奇诺机场', country: '意大利', flag: '🇮🇹', continent: 'europe' },
+  DEL: { code: 'DEL', name: '新德里英迪拉·甘地国际机场', country: '印度', flag: '🇮🇳', continent: 'asia' },
+  YVR: { code: 'YVR', name: '温哥华国际机场', country: '加拿大', flag: '🇨🇦', continent: 'namerica' },
+  JED: { code: 'JED', name: '吉达-阿卜杜勒·阿齐兹国王国际机场', country: '沙特阿拉伯', flag: '🇸🇦', continent: 'asia' },
+  BUD: { code: 'BUD', name: '布达佩斯李斯特·费伦茨国际机场', country: '匈牙利', flag: '🇺🇶', continent: 'europe' },
+  CMB: { code: 'CMB', name: '科伦坡-班达拉奈克国际机场', country: '斯里兰卡', flag: '🇱🇰', continent: 'asia' },
+  HEL: { code: 'HEL', name: '赫尔辛基万塔机场', country: '芬兰', flag: '🇫🇮', continent: 'europe' },
+  MEL: { code: 'MEL', name: '墨尔本机场', country: '澳大利亚', flag: '🇦🇺', continent: 'oceania' },
+  LIN: { code: 'LIN', name: '米兰利纳特机场', country: '意大利', flag: '🇮🇹', continent: 'europe' },
+  MRU: { code: 'MRU', name: '毛里求斯-西沃萨古尔·拉姆古兰爵士国际机场', country: '毛里求斯', flag: '🇲🇺', continent: 'africa' },
+  AMS: { code: 'AMS', name: '阿姆斯特丹史基浦机场', country: '荷兰', flag: '🇳🇱', continent: 'europe' },
+  MLA: { code: 'MLA', name: '马耳他国际机场', country: '马耳他', flag: '🇲🇹', continent: 'europe' },
+  PRG: { code: 'PRG', name: '布拉格-瓦茨拉夫·哈维尔国际机场', country: '捷克', flag: '🇨🇿', continent: 'europe' },
+  BER: { code: 'BER', name: '勃兰登堡国际机场', country: '德国', flag: '🇩🇪', continent: 'europe' },
+  KIX: { code: 'KIX', name: '大阪关西国际机场', country: '日本', flag: '🇯🇵', continent: 'asia' },
+  BRU: { code: 'BRU', name: '布鲁塞尔机场', country: '比利时', flag: '🇧🇪', continent: 'europe' },
+  DUB: { code: 'DUB', name: '都柏林机场', country: '爱尔兰', flag: '🇮🇪', continent: 'europe' },
+  DLU: { code: 'DLU', name: '大理凤仪机场', country: '中国', flag: '🇨🇳', continent: 'asia' },
+  BKI: { code: 'BKI', name: '亚庇国际机场', country: '马来西亚', flag: '🇲🇾', continent: 'asia' },
+  OSL: { code: 'OSL', name: '奥斯陆加勒穆恩机场', country: '挪威', flag: '🇳🇴', continent: 'europe' },
+  ADD: { code: 'ADD', name: '亚的斯亚贝巴机场', country: '埃塞俄比亚', flag: '🇪🇹', continent: 'africa' },
+  IAD: { code: 'IAD', name: '华盛顿杜勒斯国际机场', country: '美国', flag: '🇺🇸', continent: 'namerica' },
+  STN: { code: 'STN', name: '伦敦斯坦斯特德机场', country: '英国', flag: '🇬🇧', continent: 'europe' },
 };
 
 
@@ -634,31 +661,75 @@ let lounges = [];
 let selectedChannels = new Set(['dp', 'pp']);
 let activeTerminal = 'all';
 
-// ===== 热门机场（显示在搜索框下方） =====
-const HOT_AIRPORTS = ['LHR','HKG','KUL','MAD','HAN','CAI','FCO','BCN','DEL','YVR'];
+// ===== 大洲定义 =====
+const CONTINENTS = {
+  asia:     { name: '🌏 亚洲', order: 1 },
+  europe:   { name: '🌍 欧洲', order: 2 },
+  africa:   { name: '🌍 非洲', order: 3 },
+  namerica: { name: '🌎 北美洲', order: 4 },
+  oceania:  { name: '🌏 大洋洲', order: 5 },
+};
 
-// ===== 初始化：搜索框 + 热门机场 + 选中机场栏 =====
+// ===== 初始化：搜索框 + 大洲分组 + 选中机场栏 =====
 function initAirportSelector() {
   try {
     const custom = JSON.parse(localStorage.getItem('customAirports') || '{}');
     Object.entries(custom).forEach(([code, name]) => {
-      if (!AIRPORTS[code]) AIRPORTS[code] = { code: code, name: name, country: '', flag: '✈️' };
+      if (!AIRPORTS[code]) AIRPORTS[code] = { code: code, name: name, country: '', flag: '✈️', continent: 'asia' };
     });
   } catch(e) {}
 
-  // 渲染热门机场快捷标签
-  const hotEl = document.getElementById('hotAirports');
-  if (hotEl) {
-    hotEl.innerHTML = HOT_AIRPORTS.map(code => {
-      const a = AIRPORTS[code];
-      if (!a) return '';
-      const cnt = PRESET_DATA[code] ? PRESET_DATA[code].length : 0;
-      return `<button class="hot-btn${code===currentAirport?' active-hot':''}" onclick="switchAirport('${code}')">${a.flag} ${a.name}${cnt?' <b>'+cnt+'</b>':''}</button>`;
-    }).join('');
-  }
-
-  // 渲染当前机场信息栏
+  renderContinentSections();
   renderCurrentAptBar();
+}
+
+// 渲染大洲分组
+function renderContinentSections() {
+  const el = document.getElementById('continentSections');
+  if (!el) return;
+
+  // 按大洲分组
+  const groups = {};
+  Object.entries(AIRPORTS).forEach(([code, a]) => {
+    const c = a.continent || 'asia';
+    if (!groups[c]) groups[c] = [];
+    groups[c].push({ code, ...a });
+  });
+
+  // 按order排序
+  const sorted = Object.entries(groups).sort((a, b) =>
+    (CONTINENTS[a[0]]?.order || 99) - (CONTINENTS[b[0]]?.order || 99)
+  );
+
+  el.innerHTML = sorted.map(([key, apts]) => {
+    const cinfo = CONTINENTS[key] || { name: key };
+    return `
+      <div class="continent-group${key==='asia'||key==='europe'?' open':''}" data-continent="${key}">
+        <div class="continent-header" onclick="toggleContinent('${key}')">
+          <span>${cinfo.name}</span>
+          <span class="c-count">${apts.length}个机场</span>
+          <span class="c-arrow">▼</span>
+        </div>
+        <div class="continent-airports">
+          ${apts.map(a => {
+            const cnt = PRESET_DATA[a.code] ? PRESET_DATA[a.code].length : 0;
+            return `<button class="c-apt-btn${a.code===currentAirport?' active':''}" data-code="${a.code}" onclick="switchAirport('${a.code}')">${a.flag} ${a.name}${cnt?' <span class="c-apt-count">'+cnt+'</span>':''}</button>`;
+          }).join('')}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function toggleContinent(key) {
+  const el = document.querySelector(`.continent-group[data-continent="${key}"]`);
+  if (el) el.classList.toggle('open');
+}
+
+// 更新当前选中机场高亮
+function highlightCurrentAirport() {
+  document.querySelectorAll('.c-apt-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.code === currentAirport);
+  });
 }
 
 // ===== 搜索相关 =====
@@ -669,9 +740,14 @@ function handleSearchInput(val) {
   const q = val.trim();
   const dropdown = document.getElementById('searchDropdown');
 
-  // 高亮/灰化热门标签
-  document.querySelectorAll('.hot-btn').forEach(btn => {
-    btn.style.opacity = (!q || btn.textContent.toLowerCase().includes(q.toLowerCase())) ? '1' : '0.35';
+  // 高亮/灰化大洲按钮
+  document.querySelectorAll('.c-apt-btn').forEach(btn => {
+    btn.style.opacity = (!q || btn.textContent.toLowerCase().includes(q.toLowerCase())) ? '1' : '0.3';
+  });
+  // 展开/收起大洲分组
+  document.querySelectorAll('.continent-group').forEach(g => {
+    if (!q) { g.classList.toggle('open', g.dataset.continent === 'asia' || g.dataset.continent === 'europe'); }
+    else { g.classList.add('open'); }
   });
 
   // 清除之前的定时器
@@ -815,16 +891,17 @@ function renderCurrentAptBar() {
 }
 
 function refreshDisplayCounts() {
-  // 更新热门标签上的数字
-  document.querySelectorAll('.hot-btn').forEach(btn => {
-    const codeMatch = btn.getAttribute('onclick')?.match(/'(\w+)'/);
-    if (!codeMatch) return;
-    const code = codeMatch[1];
+  // 更新大洲按钮上的数字
+  document.querySelectorAll('.c-apt-btn').forEach(btn => {
+    const code = btn.dataset.code;
+    if (!code) return;
     try {
       let count = 0;
       const raw = localStorage.getItem(STORAGE_KEY + code);
       if (raw) { const d = JSON.parse(raw); if (Array.isArray(d)) count = d.length; }
       else if (PRESET_DATA[code] && Array.isArray(PRESET_DATA[code])) count = PRESET_DATA[code].length;
+      const cntSpan = btn.querySelector('.c-apt-count');
+      if (cntSpan) cntSpan.textContent = count || '';
     } catch(e) {}
   });
 }
@@ -855,11 +932,8 @@ function switchAirport(code) {
   if (code === currentAirport) return;
   currentAirport = code;
 
-  // 更新热门标签高亮
-  document.querySelectorAll('.hot-btn').forEach(b => {
-    const match = b.getAttribute('onclick')?.match(/'(\w+)'/);
-    if (match) b.classList.toggle('active-hot', match[1] === code);
-  });
+  // 更新大洲按钮高亮
+  highlightCurrentAirport();
 
   // 也更新旧的 apt-btn（如果有）
   document.querySelectorAll('.apt-btn').forEach(b => {
