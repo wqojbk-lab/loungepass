@@ -56,6 +56,87 @@
   }
   .header h1 { font-size: 17px; font-weight: 700; letter-spacing: 0.3px; position: relative; z-index: 1; }
   .header p { font-size: 11.5px; opacity: 0.8; margin-top: 2px; position: relative; z-index: 1; }
+  .header-sub { font-size: 12px !important; opacity: 0.85 !important; margin-top: 4px !important; }
+
+  /* 搜索框 */
+  .search-box {
+    display: flex; align-items: center; gap: 0;
+    background: rgba(255,255,255,0.95); border-radius: 10px;
+    padding: 0 12px; margin-top: 10px;
+    position: relative; z-index: 1;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+    transition: box-shadow 0.2s;
+  }
+  .search-box:focus-within {
+    box-shadow: 0 3px 20px rgba(0,0,0,0.25);
+  }
+  .search-box .search-icon { font-size: 16px; color: #999; flex-shrink: 0; }
+  .search-box input {
+    flex: 1; border: none; outline: none; padding: 11px 8px;
+    font-size: 14px; font-family: inherit; background: transparent;
+    color: #333; min-width: 0;
+  }
+  .search-box input::placeholder { color: #bbb; }
+  .search-box .search-btn {
+    padding: 7px 14px; border: none; border-radius: 8px;
+    background: var(--primary); color: white; font-size: 13px;
+    font-weight: 600; cursor: pointer; flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
+    transition: opacity 0.15s;
+  }
+  .search-box .search-btn:active { opacity: 0.85; transform: scale(0.96); }
+
+  /* 搜索下拉建议列表 */
+  .search-dropdown {
+    position: absolute; top: calc(100% + 4px); left: 12px; right: 12px;
+    background: white; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.18);
+    max-height: 220px; overflow-y: auto; z-index: 100;
+    display: none;
+  }
+  .search-dropdown.show { display: block; animation: dropFadeIn 0.15s ease; }
+  @keyframes dropFadeIn { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:translateY(0)} }
+  .search-dropdown-item {
+    display: flex; align-items: center; gap: 8px; padding: 10px 14px;
+    cursor: pointer; border-bottom: 1px solid #f0f0f0; transition: background 0.1s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .search-dropdown-item:last-child { border-bottom: none; }
+  .search-dropdown-item:active, .search-dropdown-item:hover { background: #f5f7ff; }
+  .search-dropdown-item .dd-flag { font-size: 18px; flex-shrink: 0; }
+  .search-dropdown-item .dd-info { flex: 1; min-width: 0; }
+  .search-dropdown-item .dd-name { font-size: 13.5px; font-weight: 600; color: #333; }
+  .search-dropdown-item .dd-code { font-size: 11px; color: #999; margin-top: 1px; }
+  .search-dropdown-item .dd-count { font-size: 11.5px; color: white; background: var(--primary);
+    padding: 2px 7px; border-radius: 10px; flex-shrink: 0; font-weight: 600; }
+  .search-empty {
+    text-align: center; padding: 16px; color: #999; font-size: 13px;
+  }
+
+  /* 热门机场快捷标签 */
+  .hot-airports {
+    display: flex; flex-wrap: wrap; gap: 6px; justify-content: center;
+    margin-top: 9px; position: relative; z-index: 1;
+  }
+  .hot-airports .hot-btn {
+    padding: 5px 10px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.3);
+    background: rgba(255,255,255,0.1); color: white; font-size: 11.5px;
+    cursor: pointer; transition: all 0.15s; white-space: nowrap;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .hot-airports .hot-btn:active { transform: scale(0.94); background: rgba(255,255,255,0.22); }
+  .hot-airports .hot-btn.active-hot {
+    background: white; color: var(--primary); border-color: white; font-weight: 600;
+  }
+
+  /* 当前选中机场显示 */
+  .current-apt-bar {
+    text-align: center; padding: 10px 14px; background: white;
+    margin: -8px 12px 8px; border-radius: var(--radius);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06); position: relative; z-index: 2;
+  }
+  .current-apt-name { font-size: 15px; font-weight: 700; color: var(--primary); }
+  .current-apt-info { font-size: 11px; color: #999; margin-top: 2px; }
+  .current-apt-change { font-size: 11px; color: var(--primary-light); margin-top: 4px; cursor: pointer; }
 
   /* Airport Selector - 紧凑搜索式 */
   .airport-selector {
@@ -105,7 +186,7 @@
   .channel-btn.active-dp { border-color: var(--dp-color); background: #fff8f0; color: var(--dp-color); }
   .channel-btn.active-pp { border-color: var(--pp-color); background: #f1f8e9; color: var(--pp-color); }
   .channel-btn.inactive { border-color: var(--border); color: #bbb; background: #fafafa; }
-  .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
   .dot.dragonpass { background: var(--dp-color); }
   .dot.pp { background: var(--pp-color); }
   .channel-btn.inactive .dot { opacity: 0.4; }
@@ -172,16 +253,19 @@
   .ver-unknown { background: #fff59d; border: 1.5px solid #ffd54f; }
   .ver-strict { background: #ef9a9a; border: 1.5px solid #e57373; }
 
-  .lounge-badges { display: flex; gap: 3px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; max-width: 140px; }
+  .lounge-badges { display: flex; gap: 3px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; max-width: 180px; }
   .badge {
-    padding: 2px 7px; border-radius: 8px; font-size: 10px; font-weight: 600; white-space: nowrap;
+    padding: 3px 8px; border-radius: 8px; font-size: 12px; font-weight: 700; white-space: nowrap;
   }
-  .badge-dp { background: #fff8f0; color: var(--dp-color); }
-  .badge-pp { background: #f4f8ec; color: var(--pp-color); }
+  .badge-dp { background: #fff8f0; color: var(--dp-color); border: 1.5px solid #ffcc80; }
+  .badge-pp { background: #f4f8ec; color: var(--pp-color); border: 1.5px solid #a5d6a7; }
   .badge-excl { background: #faf0fa; color: #7b1fa2; }
   .badge-rest { background: #fef0f0; color: #c62828; }
   .badge-time { background: #fff3e0; color: #e65100; }
-  .badge-ver { padding: 1px 6px; border-radius: 6px; font-size: 10px; }
+  .badge-ver { padding: 3px 8px; border-radius: 8px; font-size: 11px; font-weight: 700; }
+  .badge-ver.strict { background: #ffebee; color: #c62828; border: 1.5px solid #ef9a9a; }
+  .badge-ver.lenient { background: #e8f5e9; color: #2e7d32; border: 1.5px solid #a5d6a7; }
+  .badge-ver.unknown { background: #fffde7; color: #f57f17; border: 1.5px solid #fff59d; }
 
   /* Card Body */
   .lounge-terminal { font-size: 11.5px; color: var(--text-muted); font-weight: 500; }
@@ -198,6 +282,19 @@
 
   /* 重要信息提示条 */
   .lounge-important { font-size: 12px; color: #e65100; background: #fff8e1; padding: 7px 10px; border-radius: 8px; margin-top: 6px; border-left: 3px solid #e65100; line-height: 1.4; }
+
+  /* ===== 航站楼分组标题 ===== */
+  .terminal-section-header {
+    font-size: 13px; font-weight: 700; color: var(--primary-light);
+    padding: 8px 4px 4px; margin: 8px 0 4px;
+    display: flex; align-items: center; gap: 6px;
+    border-bottom: 2px solid #e8eaf6;
+  }
+  .terminal-section-header:first-child { margin-top: 0; }
+  .terminal-section-header .tsh-count {
+    font-size: 10.5px; font-weight: 500; color: #999;
+    background: #f5f5f5; padding: 1px 7px; border-radius: 10px;
+  }
 
   /* Empty State */
   .empty-state {
@@ -250,9 +347,22 @@
 <body>
 
 <div class="header">
-  <h1>✈️ 机场贵宾厅智能对比</h1>
-  <div class="airport-selector" id="airportSelector"></div>
-  <p style="position:relative;z-index:1">选择你拥有的渠道，查看可用休息室</p>
+  <h1>✈️ 机场贵宾厅智能查询</h1>
+  <p class="header-sub">输入机场代码，一键查询可用贵宾厅</p>
+
+  <!-- 搜索框 -->
+  <div class="search-box" id="searchBox">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="aptSearchInput" placeholder="输入机场代码或名称，如 LHR / 希思罗..." autocomplete="off"
+           oninput="handleSearchInput(this.value)" onkeydown="handleSearchKeydown(event)" value="">
+    <button class="search-btn" onclick="doSearch()">查询</button>
+  </div>
+
+  <!-- 搜索下拉建议列表 -->
+  <div class="search-dropdown" id="searchDropdown" style="display:none"></div>
+
+  <!-- 热门机场快捷标签 -->
+  <div class="hot-airports" id="hotAirports"></div>
 </div>
 
 <div class="container">
@@ -303,9 +413,9 @@
 <script>
 // ===== 机场元数据（全量硬编码） =====
 const AIRPORTS = {
-  LHR: { code: 'LHR', name: 'LHR', country: '未知', flag: '?' },
-  HKG: { code: 'HKG', name: 'HKG', country: '未知', flag: '?' },
-  CPH: { code: 'CPH', name: 'CPH', country: '未知', flag: '?' },
+  LHR: { code: 'LHR', name: '伦敦希思罗', country: '英国', flag: '🇬🇧' },
+  HKG: { code: 'HKG', name: '香港国际机场', country: '中国香港', flag: '🇭🇰' },
+  CPH: { code: 'CPH', name: '哥本哈根凯斯楚普', country: '丹麦', flag: '🇩🇰' },
   KUL: { code: 'KUL', name: '吉隆坡国际机场', country: '马来西亚', flag: '🇲🇾' },
   MAD: { code: 'MAD', name: '马德里-巴拉哈斯机场', country: '西班牙', flag: '🇪🇸' },
   HAN: { code: 'HAN', name: '河内内排国际机场', country: '越南', flag: '🇻🇳' },
@@ -322,18 +432,18 @@ const AIRPORTS = {
   LIN: { code: 'LIN', name: '米兰利纳特机场', country: '意大利', flag: '🇮🇹' },
   MRU: { code: 'MRU', name: '毛里求斯-西沃萨古尔·拉姆古兰爵士国际机场', country: '毛里求斯', flag: '🇲🇺' },
   AMS: { code: 'AMS', name: '阿姆斯特丹史基浦机场', country: '荷兰', flag: '🇳🇱' },
-  MLA: { code: 'MLA', name: '马耳他国际机场', country: '马耳他', flag: '🇲🇼' },
+  MLA: { code: 'MLA', name: '马耳他国际机场', country: '马耳他', flag: '🇲🇹' },
   PRG: { code: 'PRG', name: '布拉格-瓦茨拉夫·哈维尔国际机场', country: '捷克', flag: '🇨🇿' },
   BER: { code: 'BER', name: '勃兰登堡国际机场', country: '德国', flag: '🇩🇪' },
   KIX: { code: 'KIX', name: '大阪关西国际机场', country: '日本', flag: '🇯🇵' },
   BRU: { code: 'BRU', name: '布鲁塞尔机场', country: '比利时', flag: '🇧🇪' },
-  DUB: { code: 'DUB', name: '都柏林机场', country: '爱尔兰', flag: '🇪🇺' },
+  DUB: { code: 'DUB', name: '都柏林机场', country: '爱尔兰', flag: '🇮🇪' },
   DLU: { code: 'DLU', name: '大理凤仪机场', country: '中国', flag: '🇨🇳' },
   BKI: { code: 'BKI', name: '亚庇国际机场', country: '马来西亚', flag: '🇲🇾' },
   OSL: { code: 'OSL', name: '奥斯陆加勒穆恩机场', country: '挪威', flag: '🇳🇴' },
-  ADD: { code: 'ADD', name: '亚的斯亚贝巴机场', country: '埃塞俄比亚', flag: '🇪🇹a' },
-  { code: 'IAD', name: '华盛顿杜勒斯国际机场', country: '美国', flag: '🇺🇸' },
-  { code: 'STN', name: '伦敦斯坦斯特德机场', country: '英国', flag: '🇬🇧' },
+  ADD: { code: 'ADD', name: '亚的斯亚贝巴机场', country: '埃塞俄比亚', flag: '🇪🇹' },
+  IAD: { code: 'IAD', name: '华盛顿杜勒斯国际机场', country: '美国', flag: '🇺🇸' },
+  STN: { code: 'STN', name: '伦敦斯坦斯特德机场', country: '英国', flag: '🇬🇧' },
 };
 
 
@@ -526,7 +636,10 @@ let lounges = [];
 let selectedChannels = new Set(['dp', 'pp']);
 let activeTerminal = 'all';
 
-// ===== 初始化机场选择器 =====
+// ===== 热门机场（显示在搜索框下方） =====
+const HOT_AIRPORTS = ['LHR','HKG','KUL','MAD','HAN','CAI','FCO','BCN','DEL','YVR'];
+
+// ===== 初始化：搜索框 + 热门机场 + 选中机场栏 =====
 function initAirportSelector() {
   try {
     const custom = JSON.parse(localStorage.getItem('customAirports') || '{}');
@@ -535,41 +648,186 @@ function initAirportSelector() {
     });
   } catch(e) {}
 
-  const el = document.getElementById('airportSelector');
-  let html = '<div class="apt-search-wrap"><span class="apt-search-icon">🔍</span><input type="text" id="aptSearchInput" placeholder="搜索机场代码(如LHR/KUL)..." oninput="filterDisplayAirports()" value=""></div>';
-  html += Object.values(AIRPORTS).map(a => {
-    const shortName = a.name.length > 6 ? a.name.substring(0, 5) + '…' : a.name;
-    return `<button class="apt-btn${a.code===currentAirport?' active':''}" data-code="${a.code}" data-name="${a.name}" onclick="switchAirport('${a.code}')">${a.flag} ${a.code} ${shortName}<span class="apt-count" id="cnt_${a.code}"></span></button>`;
-  }).join('');
-  el.innerHTML = html;
+  // 渲染热门机场快捷标签
+  const hotEl = document.getElementById('hotAirports');
+  if (hotEl) {
+    hotEl.innerHTML = HOT_AIRPORTS.map(code => {
+      const a = AIRPORTS[code];
+      if (!a) return '';
+      const cnt = PRESET_DATA[code] ? PRESET_DATA[code].length : 0;
+      return `<button class="hot-btn${code===currentAirport?' active-hot':''}" onclick="switchAirport('${code}')">${a.flag} ${a.name}${cnt?' <b>'+cnt+'</b>':''}</button>`;
+    }).join('');
+  }
 
-  refreshDisplayCounts();
+  // 渲染当前机场信息栏
+  renderCurrentAptBar();
+}
+
+// ===== 搜索相关 =====
+let searchTimer = null;
+
+// 搜索框输入 — 显示匹配的下拉列表
+function handleSearchInput(val) {
+  const q = val.trim();
+  const dropdown = document.getElementById('searchDropdown');
+
+  // 高亮/灰化热门标签
+  document.querySelectorAll('.hot-btn').forEach(btn => {
+    btn.style.opacity = (!q || btn.textContent.toLowerCase().includes(q.toLowerCase())) ? '1' : '0.35';
+  });
+
+  // 清除之前的定时器
+  if (searchTimer) clearTimeout(searchTimer);
+
+  if (!q) {
+    hideDropdown();
+    return;
+  }
+
+  // 防抖：200ms后显示建议
+  searchTimer = setTimeout(() => showSearchSuggestions(q), 150);
+}
+
+// 回车键触发查询
+function handleSearchKeydown(e) {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    doSearch();
+  } else if (e.key === 'Escape') {
+    hideDropdown();
+  }
+}
+
+// 点击"查询"按钮
+function doSearch() {
+  const q = document.getElementById('aptSearchInput').value.trim().toLowerCase();
+  if (!q) return;
+
+  // 1. 先精确匹配代码
+  let matchCode = Object.keys(AIRPORTS).find(c => c.toLowerCase() === q);
+  // 2. 再模糊匹配中文名
+  if (!matchCode) {
+    matchCode = Object.entries(AIRPORTS).find(([c, a]) =>
+      a.name.toLowerCase().includes(q)
+    )?.[0];
+  }
+  // 3. 再前缀匹配代码
+  if (!matchCode) {
+    matchCode = Object.keys(AIRPORTS).find(c => c.toLowerCase().startsWith(q));
+  }
+
+  if (matchCode) {
+    hideDropdown();
+    switchAirport(matchCode);
+  } else {
+    // 无匹配时提示
+    const dropdown = document.getElementById('searchDropdown');
+    if (dropdown) {
+      dropdown.innerHTML = '<div class="search-empty">未找到匹配的机场<br><small>尝试输入代码（如 LHR）或城市名</small></div>';
+      dropdown.classList.add('show');
+    }
+  }
+}
+
+// 显示搜索下拉建议
+function showSearchSuggestions(q) {
+  const ql = q.toLowerCase();
+  const dropdown = document.getElementById('searchDropdown');
+  if (!dropdown) return;
+
+  // 匹配逻辑：代码精确/前缀匹配 或 中文名包含
+  const matches = Object.entries(AIRPORTS)
+    .map(([code, apt]) => ({
+      code, name: apt.name, flag: apt.flag,
+      count: (PRESET_DATA[code] || []).length,
+      score: code.toLowerCase() === ql ? 100 :
+             code.toLowerCase().startsWith(ql) ? 80 :
+             apt.name.toLowerCase().includes(ql) ? 60 :
+             ql.length >= 2 && code.toLowerCase().includes(ql) ? 40 : 0
+    }))
+    .filter(m => m.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 10);
+
+  if (matches.length === 0) {
+    dropdown.innerHTML = '<div class="search-empty">未找到匹配的机场</div>';
+  } else {
+    dropdown.innerHTML = matches.map(m => `
+      <div class="search-dropdown-item" onclick="selectSearchResult('${m.code}')">
+        <span class="dd-flag">${m.flag}</span>
+        <div class="dd-info">
+          <div class="dd-name">${highlightMatch(m.name, q)}</div>
+          <div class="dd-code">${m.code}${m.count ? ' · ' + m.count + '个贵宾厅' : ''}</div>
+        </div>
+        ${m.count ? `<span class="dd-count">${m.count}</span>` : ''}
+      </div>
+    `).join('');
+  }
+  dropdown.classList.add('show');
+}
+
+// 高亮匹配文字
+function highlightMatch(text, query) {
+  if (!query) return text;
+  const idx = text.toLowerCase().indexOf(query.toLowerCase());
+  if (idx < 0) return text;
+  return text.slice(0, idx) + '<mark style="background:#fff3cd;color:#856404;padding:0 1px;border-radius:2px;font-weight:600">' +
+         text.slice(idx, idx + query.length) + '</mark>' + text.slice(idx + query.length);
+}
+
+// 点击下拉选项
+function selectSearchResult(code) {
+  hideDropdown();
+  document.getElementById('aptSearchInput').value = '';
+  switchAirport(code);
+}
+
+// 隐藏下拉列表
+function hideDropdown() {
+  const d = document.getElementById('searchDropdown');
+  if (d) { d.classList.remove('show'); setTimeout(() => { if (!d.classList.contains('show')) d.innerHTML = ''; }, 200); }
+}
+
+// 点击页面其他区域关闭下拉
+document.addEventListener('click', function(e) {
+  const box = document.getElementById('searchBox');
+  const drop = document.getElementById('searchDropdown');
+  if (box && drop && !box.contains(e.target) && !drop.contains(e.target)) {
+    hideDropdown();
+  }
+});
+
+// 当前机场信息栏
+function renderCurrentAptBar() {
+  let bar = document.getElementById('currentAptBar');
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.className = 'current-apt-bar';
+    bar.id = 'currentAptBar';
+    const container = document.querySelector('.container');
+    if (container) container.parentNode.insertBefore(bar, container);
+  }
+  const a = AIRPORTS[currentAirport] || {};
+  const cnt = lounges.length;
+  bar.innerHTML = `
+    <div class="current-apt-name">${a.flag || '✈️'} ${a.name || currentAirport}</div>
+    <div class="current-apt-info">${cnt}个贵宾厅 · ${a.country || ''} · 点击上方搜索或标签切换机场</div>
+    <div class="current-apt-change" onclick="document.getElementById('aptSearchInput').focus();window.scrollTo({top:0})">🔍 切换其他机场 →</div>
+  `;
 }
 
 function refreshDisplayCounts() {
-  document.querySelectorAll('.apt-btn[data-code]').forEach(btn => {
-    const code = btn.dataset.code;
-    if (!code) return;
+  // 更新热门标签上的数字
+  document.querySelectorAll('.hot-btn').forEach(btn => {
+    const codeMatch = btn.getAttribute('onclick')?.match(/'(\w+)'/);
+    if (!codeMatch) return;
+    const code = codeMatch[1];
     try {
-      // 优先从localStorage取，否则用预置数据
       let count = 0;
       const raw = localStorage.getItem(STORAGE_KEY + code);
       if (raw) { const d = JSON.parse(raw); if (Array.isArray(d)) count = d.length; }
       else if (PRESET_DATA[code] && Array.isArray(PRESET_DATA[code])) count = PRESET_DATA[code].length;
-
-      const badge = btn.querySelector('.apt-count');
-      if (badge) { badge.textContent = count > 0 ? count : ''; badge.style.display = count > 0 ? 'inline' : 'none'; }
     } catch(e) {}
-  });
-}
-
-function filterDisplayAirports() {
-  const query = (document.getElementById('aptSearchInput')?.value || '').trim().toLowerCase();
-  document.querySelectorAll('.apt-btn[data-code]').forEach(btn => {
-    if (!query) { btn.style.display = ''; return; }
-    const code = (btn.dataset.code || '').toLowerCase();
-    const name = (btn.dataset.name || '').toLowerCase();
-    btn.style.display = code.includes(query) || name.includes(query) ? '' : 'none';
   });
 }
 
@@ -599,7 +857,16 @@ function switchAirport(code) {
   if (code === currentAirport) return;
   currentAirport = code;
 
-  document.querySelectorAll('.apt-btn').forEach(b => b.classList.toggle('active', b.dataset.code === code));
+  // 更新热门标签高亮
+  document.querySelectorAll('.hot-btn').forEach(b => {
+    const match = b.getAttribute('onclick')?.match(/'(\w+)'/);
+    if (match) b.classList.toggle('active-hot', match[1] === code);
+  });
+
+  // 也更新旧的 apt-btn（如果有）
+  document.querySelectorAll('.apt-btn').forEach(b => {
+    if (b.dataset.code) b.classList.toggle('active', b.dataset.code === code);
+  });
 
   selectedChannels = new Set(['dp', 'pp']);
   activeTerminal = 'all';
@@ -608,8 +875,12 @@ function switchAirport(code) {
 
   loadAirportData(code);
 
+  // 更新标题
   const apt = AIRPORTS[code] || { name: code, flag: '', code: code };
   document.querySelector('.header h1').textContent = `✈️ ${apt.flag} ${apt.name}`;
+
+  // 更新当前机场栏
+  renderCurrentAptBar();
 
   // 更新底部提示
   const hintEl = document.getElementById('bottomBarHint');
@@ -723,27 +994,42 @@ function render() {
     aiTip.classList.remove('show');
   }
 
-  // 卡片列表
+  // 卡片列表 — 按航站楼分组显示
   const listEl = document.getElementById('loungeList');
-  listEl.innerHTML = filtered.map(l => renderCard(l)).join('');
+  const termOrder = [...new Set(filtered.map(l => l.terminal || '?'))].sort();
+
+  let html = '';
+  termOrder.forEach(t => {
+    const termLounges = filtered.filter(l => (l.terminal || '?') === t);
+    html += `<div class="terminal-section-header">✈️ ${t} 航站楼<span class="tsh-count">${termLounges.length}间</span></div>`;
+    html += termLounges.map(l => renderCard(l)).join('');
+  });
+  listEl.innerHTML = html;
 }
 
 function renderCard(l) {
   const isDp = l.channels.includes('dp') || l.channels.includes('both');
   const isPp = l.channels.includes('pp') || l.channels.includes('both');
 
-  // 只显示渠道badge + 餐厅/独占标记
+  // 渠道badge + 餐厅标记
   let badges = '';
   if (l.channels[0] === 'both') badges += '<span class="badge badge-dp">龙</span><span class="badge badge-pp">PP</span>';
   else if (isPp) badges += '<span class="badge badge-pp">PP</span>';
   else if (isDp) badges += '<span class="badge badge-dp">龙</span>';
-  if (l.isRestaurant) badges += '<span class="badge badge-rest">餐厅</span>';
+  if (l.isRestaurant) badges += '<span class="badge badge-rest">🍽 餐厅</span>';
 
-  // 只保留营业时间和提前规则，去掉设施标签
-  const tbMap = { '2h':'⏱2h','3h':'⏱3h','4h':'⏱4h','any':'随时','unknown':'?' };
+  // 验证级别badge
+  const verMap = { strict: {label:'🔒 严格', cls:'strict'}, lenient: {label:'🔓 宽松', cls:'lenient'}, unknown: {label:'❓ 待验证', cls:'unknown'} };
+  if (l.verifyLevel && verMap[l.verifyLevel]) {
+    const v = verMap[l.verifyLevel];
+    badges += `<span class="badge badge-ver ${v.cls}">${v.label}</span>`;
+  }
+
+  // 营业时间和提前规则
+  const tbMap = { '2h':'⏱ 提前2h','3h':'⏱ 提前3h','4h':'⏱ 提前4h','any':'随时可用','unknown':'?' };
   let tagHtml = '';
-  if (l.hours) tagHtml += `<span class="tag tag-hours">🕐${l.hours}</span>`;
-  if (l.timeBefore) tagHtml += `<span class="tag tag-before">✈️${tbMap[l.timeBefore]||l.timeBefore}</span>`;
+  if (l.hours) tagHtml += `<span class="tag tag-hours">🕐 ${l.hours}</span>`;
+  if (l.timeBefore) tagHtml += `<span class="tag tag-before">✈️ ${tbMap[l.timeBefore]||l.timeBefore}</span>`;
 
   // 重要信息（醒目提示条）
   const noteHtml = l.importantNote ? `<div class="lounge-important">⚠️ ${l.importantNote}</div>` : '';
