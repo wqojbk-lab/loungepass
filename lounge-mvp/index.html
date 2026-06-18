@@ -306,6 +306,7 @@
   }
   .c-apt-btn:active { transform: scale(0.95); }
   .c-apt-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+  .c-apt-btn .c-apt-code { font-size: 12px; font-weight: 600; color: inherit; opacity: 0.55; }
   .c-apt-btn .c-apt-count { font-size: 10px; opacity: 0.7; font-weight: 400; }
 
   /* ===== 航站楼分组标题 ===== */
@@ -713,7 +714,7 @@ function renderContinentSections() {
         <div class="continent-airports">
           ${apts.map(a => {
             const cnt = PRESET_DATA[a.code] ? PRESET_DATA[a.code].length : 0;
-            return `<button class="c-apt-btn${a.code===currentAirport?' active':''}" data-code="${a.code}" onclick="switchAirport('${a.code}')">${a.flag} ${a.name}${cnt?' <span class="c-apt-count">'+cnt+'</span>':''}</button>`;
+            return `<button class="c-apt-btn${a.code===currentAirport?' active':''}" data-code="${a.code}" onclick="switchAirport('${a.code}')">${a.flag} <span class="c-apt-code">${a.code}</span> ${a.name}${cnt?' <span class="c-apt-count">'+cnt+'</span>':''}</button>`;
           }).join('')}
         </div>
       </div>`;
